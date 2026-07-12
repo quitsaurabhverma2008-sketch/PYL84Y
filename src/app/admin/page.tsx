@@ -46,6 +46,9 @@ interface DashboardData {
 }
 
 export default function AdminPage() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
@@ -64,10 +67,29 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    const saved = sessionStorage.getItem('pyl84y_admin_auth');
+    if (saved === 'subh@2008') {
+      setAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!authenticated) return;
     fetchData();
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [authenticated]);
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === 'subh@2008') {
+      sessionStorage.setItem('pyl84y_admin_auth', 'subh@2008');
+      setAuthenticated(true);
+      setPasswordError('');
+    } else {
+      setPasswordError('Wrong password!');
+      setPasswordInput('');
+    }
+  };
 
   const downloadAllAsZip = async () => {
     if (!data) return;
@@ -223,6 +245,42 @@ export default function AdminPage() {
       room.messages.some(m => m.content.toLowerCase().includes(q))
     );
   }) || [];
+
+  if (!authenticated) {
+    return (
+      <div style={{ minHeight: '100dvh', background: '#0a0a0f', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ width: '100%', maxWidth: '380px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>PYL84Y</h1>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginBottom: '32px' }}>Admin Dashboard — Enter Password</p>
+
+          {passwordError && (
+            <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px' }}>
+              {passwordError}
+            </div>
+          )}
+
+          <input
+            type="password"
+            className="input-field"
+            placeholder="Enter password..."
+            value={passwordInput}
+            onChange={e => setPasswordInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handlePasswordSubmit()}
+            autoFocus
+            style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', letterSpacing: '4px' }}
+          />
+          <button
+            className="btn-primary"
+            onClick={handlePasswordSubmit}
+            disabled={!passwordInput.trim()}
+          >
+            Unlock
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100dvh', background: '#0a0a0f', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
