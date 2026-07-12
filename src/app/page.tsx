@@ -139,19 +139,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
       <ParticleBackground />
+      {/* Colorful gradient blobs */}
+      <div className="gradient-blob gradient-blob-1" />
+      <div className="gradient-blob gradient-blob-2" />
+      <div className="gradient-blob gradient-blob-3" />
+
       <div ref={containerRef} style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '48px' }} data-animate>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--color-primary-20), var(--color-secondary-20))', border: '1px solid var(--color-primary-30)', marginBottom: '20px', backdropFilter: 'blur(10px)' }} className="animate-glow">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#logo-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--color-primary)"/><stop offset="100%" stopColor="var(--color-secondary)"/></linearGradient></defs>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '88px', height: '88px', borderRadius: '24px', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent))', backgroundSize: '200% 200%', animation: 'gradientShift 4s ease infinite', marginBottom: '24px', boxShadow: '0 8px 40px var(--color-glow-strong), 0 0 80px var(--color-glow)' }} className="animate-glow">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <h1 style={{ fontSize: 'clamp(40px, 8vw, 56px)', fontWeight: '900', letterSpacing: '-3px', lineHeight: 1 }} className="text-gradient">PYL84Y</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', marginTop: '12px', fontWeight: 500, letterSpacing: '2px', textTransform: 'uppercase' }}>Chat · Voice · Video</p>
+          <h1 style={{ fontSize: 'clamp(44px, 9vw, 64px)', fontWeight: '900', letterSpacing: '-3px', lineHeight: 1, background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent), var(--color-primary))', backgroundSize: '300% 300%', animation: 'gradientShift 6s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>PYL84Y</h1>
+          <div className="accent-line" style={{ margin: '14px auto 0' }} />
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '14px', fontWeight: 600, letterSpacing: '3px', textTransform: 'uppercase' }}>Chat · Voice · Video</p>
         </div>
 
         {error && (
@@ -171,9 +176,10 @@ export default function LoginPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Permanent Room
             </button>
-            <div data-animate style={{ marginTop: '20px', padding: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.7', backdropFilter: 'blur(10px)' }}>
-              <p><strong style={{ color: 'var(--color-foreground)', opacity: 0.7 }}>Non-Permanent:</strong> Quick rooms, 4-digit code, chats saved 24hrs</p>
-              <p style={{ marginTop: '6px' }}><strong style={{ color: 'var(--color-foreground)', opacity: 0.7 }}>Permanent:</strong> 7-day ID, searchable code, full profile</p>
+            <div data-animate style={{ marginTop: '20px', padding: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.7', backdropFilter: 'blur(10px)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-accent))' }} />
+              <p style={{ marginTop: '8px' }}><strong style={{ color: 'var(--color-primary)' }}>⚡ Non-Permanent:</strong> Quick rooms, 4-digit code, chats saved 24hrs</p>
+              <p style={{ marginTop: '6px' }}><strong style={{ color: 'var(--color-accent)' }}>🔒 Permanent:</strong> 7-day ID, searchable code, full profile</p>
             </div>
           </div>
         )}

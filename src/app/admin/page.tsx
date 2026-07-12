@@ -313,16 +313,19 @@ export default function AdminPage() {
 
   if (!authenticated) {
     return (
-      <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', backdropFilter: 'blur(10px)' }} className="animate-glow">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#lock-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <defs><linearGradient id="lock-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--color-primary)"/><stop offset="100%" stopColor="var(--color-secondary)"/></linearGradient></defs>
+      <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
+        {/* Gradient blobs */}
+        <div className="gradient-blob gradient-blob-1" />
+        <div className="gradient-blob gradient-blob-2" />
+        <div style={{ width: '100%', maxWidth: '400px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <div style={{ width: '88px', height: '88px', borderRadius: '24px', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent))', backgroundSize: '200% 200%', animation: 'gradientShift 4s ease infinite', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 8px 40px var(--color-glow-strong), 0 0 80px var(--color-glow)' }} className="animate-glow">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
-          <h1 style={{ fontSize: '36px', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px' }} className="text-gradient">PYL84Y</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '36px' }}>Admin Dashboard — Enter Password</p>
+          <h1 style={{ fontSize: '42px', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent), var(--color-primary))', backgroundSize: '300% 300%', animation: 'gradientShift 6s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>PYL84Y</h1>
+          <div className="accent-line" style={{ margin: '0 auto 14px' }} />
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '36px', fontWeight: 600 }}>Admin Dashboard — Enter Password</p>
 
           {passwordError && (
             <div style={{ background: 'var(--color-danger-10)', border: '1px solid var(--color-danger-25)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px' }} className="animate-scale">
@@ -351,10 +354,10 @@ export default function AdminPage() {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)' }}>
       {/* Header */}
-      <div style={{ padding: '16px 24px', background: 'var(--color-overlay)', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(24px)' }}>
+      <div style={{ padding: '16px 24px', background: 'var(--color-overlay)', borderBottom: '1px solid var(--color-card-border)', position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(24px)', borderTop: '3px solid transparent', borderImage: 'linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-accent)) 1' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1 style={{ fontSize: '24px', fontWeight: '900', fontFamily: 'var(--font-heading)', letterSpacing: '-1px' }} className="text-gradient">PYL84Y</h1>
+            <h1 style={{ fontSize: '24px', fontWeight: '900', fontFamily: 'var(--font-heading)', letterSpacing: '-1px', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent))', backgroundSize: '200% 200%', animation: 'gradientShift 4s ease infinite', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>PYL84Y</h1>
             <span style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Admin Dashboard</span>
           </div>
           <button
@@ -409,9 +412,10 @@ export default function AdminPage() {
                 { label: 'Total Messages', value: data?.totalMessages || 0, color: '#a78bfa', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
                 { label: 'Permanent Rooms', value: data?.rooms.filter(r => r.isPermanent).length || 0, color: 'var(--color-success)', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
               ].map((stat, i) => (
-                <div data-admin-animate key={i} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', padding: '22px', backdropFilter: 'blur(10px)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'default' }}
+                <div data-admin-animate key={i} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', padding: '22px', backdropFilter: 'blur(10px)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'default', position: 'relative', overflow: 'hidden' }}
                   onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${stat.color}22`; }}
                   onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: stat.color, opacity: 0.6 }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                     <div style={{ color: stat.color, opacity: 0.7 }}>{stat.icon}</div>
                     <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontWeight: 500 }}>{stat.label}</span>
