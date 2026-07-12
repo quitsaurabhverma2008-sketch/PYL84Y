@@ -291,7 +291,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
               <div>
                 <img src={msg.imageUrl} alt="Shared" style={{ maxWidth: '100%', borderRadius: '8px', cursor: 'pointer' }} onClick={() => saveImage(msg.imageUrl!)} />
                 <button onClick={() => saveImage(msg.imageUrl!)} style={{ marginTop: '4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}>💾 Save Image</button>
-                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>Auto-deletes in 30 min</p>
+                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>Saved to server • Admin keeps 3 days</p>
               </div>
             ) : (
               <p>{msg.content}</p>

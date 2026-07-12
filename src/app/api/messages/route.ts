@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       type: type || 'text',
       imageUrl,
       createdAt: Date.now(),
-      expiresAt: type === 'image' ? Date.now() + 30 * 60 * 1000 : undefined,
+      expiresAt: undefined,
     };
 
     await addRoomMessage(roomId, message);

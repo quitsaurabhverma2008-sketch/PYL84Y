@@ -10,6 +10,8 @@ if (hasStorage) {
   });
 }
 
+const CLEANUP_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+
 // In-memory fallback for local dev
 const memRooms = new Map<string, any>();
 const memUsers = new Map<string, any>();
@@ -25,6 +27,64 @@ async function saveHash(key: string, data: Record<string, any>): Promise<void> {
   if (!redis) return;
   await redis.set(key, data);
 }
+
+// === Cleanup System ===
+
+export async function getNextCleanupTime(): Promise<number> {
+  if (redis) {
+    const ts = await redis.get<number>('nextCleanup');
+    if (ts) return ts;
+    const firstCleanup = Date.now() + CLEANUP_INTERVAL_MS;
+    await redis.set('nextCleanup', firstCleanup);
+    return firstCleanup;
+  }
+  return Date.now() + CLEANUP_INTERVAL_MS;
+}
+
+export async function runCleanupIfNeeded(): Promise<{ cleaned: boolean; roomsDeleted: number; messagesDeleted: number }> {
+  const nextCleanup = await getNextCleanupTime();
+  if (Date.now() < nextCleanup) {
+    return { cleaned: false, roomsDeleted: 0, messagesDeleted: 0 };
+  }
+
+  const allRooms = await getAllRooms();
+  const allMessages = await getAllMessages();
+  const allUsers = await getAllUsers();
+  const now = Date.now();
+
+  let roomsDeleted = 0;
+  let messagesDeleted = 0;
+
+  for (const room of allRooms) {
+    if (room.expiresAt && room.expiresAt < now) {
+      await deleteRoom(room.id);
+      roomsDeleted++;
+      if (allMessages[room.id]) {
+        messagesDeleted += allMessages[room.id].length;
+        delete allMessages[room.id];
+      }
+    }
+  }
+
+  // Clean old messages (older than 3 days)
+  for (const [roomId, msgs] of Object.entries(allMessages)) {
+    const filtered = msgs.filter(m => m.createdAt > now - CLEANUP_INTERVAL_MS);
+    messagesDeleted += msgs.length - filtered.length;
+    if (redis) {
+      const all = await getHash('messages');
+      all[roomId] = filtered;
+      await saveHash('messages', all);
+    }
+  }
+
+  if (redis) {
+    await redis.set('nextCleanup', now + CLEANUP_INTERVAL_MS);
+  }
+
+  return { cleaned: true, roomsDeleted, messagesDeleted };
+}
+
+// === Room Operations ===
 
 export async function getRoom(roomId: string): Promise<any | null> {
   if (redis) {
@@ -82,6 +142,8 @@ export async function deleteRoom(roomId: string): Promise<void> {
   }
 }
 
+// === User Operations ===
+
 export async function addUser(userId: string, user: any): Promise<void> {
   if (redis) {
     const users = await getHash('users');
@@ -99,6 +161,8 @@ export async function getUser(userId: string): Promise<any | null> {
   }
   return memUsers.get(userId) || null;
 }
+
+// === Message Operations ===
 
 export async function getRoomMessages(roomId: string): Promise<any[]> {
   if (redis) {

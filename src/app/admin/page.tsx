@@ -40,6 +40,8 @@ interface RoomData {
 
 interface DashboardData {
   kvConnected: boolean;
+  nextCleanup: number;
+  cleanupIntervalMs: number;
   totalRooms: number;
   totalUsers: number;
   totalMessages: number;
@@ -56,6 +58,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [downloading, setDownloading] = useState(false);
   const [downloadingRoom, setDownloadingRoom] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -80,6 +83,26 @@ export default function AdminPage() {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [authenticated]);
+
+  useEffect(() => {
+    if (!data?.nextCleanup) return;
+    const tick = () => {
+      const diff = data.nextCleanup - Date.now();
+      if (diff <= 0) {
+        setCountdown('Cleaning up now...');
+        fetchData();
+        return;
+      }
+      const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+      const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+      const mins = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+      const secs = Math.floor((diff % (60 * 1000)) / 1000);
+      setCountdown(`${days}d ${hours}h ${mins}m ${secs}s`);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [data?.nextCleanup]);
 
   const handlePasswordSubmit = () => {
     if (passwordInput === 'subh@2008') {
@@ -316,9 +339,20 @@ export default function AdminPage() {
         ) : (
           <>
             {/* KV Status */}
-            <div style={{ marginBottom: '20px', padding: '10px 16px', borderRadius: '10px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: data?.kvConnected ? 'rgba(34,197,94,0.1)' : 'rgba(251,191,36,0.1)', border: `1px solid ${data?.kvConnected ? 'rgba(34,197,94,0.3)' : 'rgba(251,191,36,0.3)'}` }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: data?.kvConnected ? '#22c55e' : '#fbbf24' }} />
-              {data?.kvConnected ? 'KV Connected — Data is persistent' : 'In-Memory Mode — Data resets on restart'}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ padding: '10px 16px', borderRadius: '10px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: data?.kvConnected ? 'rgba(34,197,94,0.1)' : 'rgba(251,191,36,0.1)', border: `1px solid ${data?.kvConnected ? 'rgba(34,197,94,0.3)' : 'rgba(251,191,36,0.3)'}` }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: data?.kvConnected ? '#22c55e' : '#fbbf24' }} />
+                {data?.kvConnected ? 'Upstash Connected' : 'In-Memory Mode'}
+              </div>
+              <div style={{ padding: '10px 16px', borderRadius: '10px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <span style={{ fontSize: '14px' }}>🧹</span>
+                <span>Next cleanup in: <strong style={{ color: '#fca5a5', fontVariantNumeric: 'tabular-nums' }}>{countdown}</strong></span>
+              </div>
+              {countdown && data?.nextCleanup && (
+                <div style={{ padding: '10px 16px', borderRadius: '10px', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+                  All data auto-deletes every 3 days. Download before cleanup!
+                </div>
+              )}
             </div>
 
             {/* Stats */}
