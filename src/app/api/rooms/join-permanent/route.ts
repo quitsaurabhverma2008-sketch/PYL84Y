@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { rooms, users } from '@/lib/db';
+import { findPermanentRoomByCode, setRoom, addUser, deleteRoom } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,25 +11,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Code and username are required' }, { status: 400 });
     }
 
-    let foundRoom = null;
-    for (const [, room] of rooms) {
-      if (room.code === code && room.isPermanent) {
-        foundRoom = room;
-        break;
-      }
-    }
+    const foundRoom = await findPermanentRoomByCode(code);
 
     if (!foundRoom) {
       return NextResponse.json({ error: 'Permanent room not found' }, { status: 404 });
     }
 
     if (foundRoom.expiresAt && foundRoom.expiresAt < Date.now()) {
-      rooms.delete(foundRoom.id);
+      await deleteRoom(foundRoom.id);
       return NextResponse.json({ error: 'Room has expired' }, { status: 410 });
     }
 
     const userId = uuidv4();
     foundRoom.participants.push(userId);
+    await setRoom(foundRoom.id, foundRoom);
 
     const user = {
       id: userId,
@@ -38,7 +33,7 @@ export async function POST(request: NextRequest) {
       createdAt: Date.now(),
     };
 
-    users.set(userId, user);
+    await addUser(userId, user);
 
     return NextResponse.json({ room: foundRoom, user });
   } catch (error) {

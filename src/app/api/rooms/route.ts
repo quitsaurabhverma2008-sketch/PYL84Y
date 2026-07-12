@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { rooms, users } from '@/lib/db';
+import { setRoom, addUser } from '@/lib/db';
 
 function generateRoomCode(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
-function generatePermanentCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
 }
 
 export async function POST(request: NextRequest) {
@@ -26,29 +17,27 @@ export async function POST(request: NextRequest) {
 
     const userId = uuidv4();
     const roomId = uuidv4();
-    const roomCode = isPermanent ? generatePermanentCode() : generateRoomCode();
+    const roomCode = generateRoomCode();
 
     const room = {
       id: roomId,
       code: roomCode,
-      isPermanent,
+      isPermanent: false,
       createdBy: userId,
       createdAt: Date.now(),
-      expiresAt: isPermanent ? Date.now() + 7 * 24 * 60 * 60 * 1000 : Date.now() + 24 * 60 * 60 * 1000,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
       participants: [userId],
     };
 
     const user = {
       id: userId,
       name: userName,
-      isPermanent,
+      isPermanent: false,
       createdAt: Date.now(),
-      permanentCode: isPermanent ? roomCode : undefined,
-      permanentExpiry: isPermanent ? room.expiresAt : undefined,
     };
 
-    rooms.set(roomId, room);
-    users.set(userId, user);
+    await setRoom(roomId, room);
+    await addUser(userId, user);
 
     return NextResponse.json({ room, user });
   } catch (error) {

@@ -39,6 +39,7 @@ interface RoomData {
 }
 
 interface DashboardData {
+  kvConnected: boolean;
   totalRooms: number;
   totalUsers: number;
   totalMessages: number;
@@ -314,6 +315,12 @@ export default function AdminPage() {
           </div>
         ) : (
           <>
+            {/* KV Status */}
+            <div style={{ marginBottom: '20px', padding: '10px 16px', borderRadius: '10px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: data?.kvConnected ? 'rgba(34,197,94,0.1)' : 'rgba(251,191,36,0.1)', border: `1px solid ${data?.kvConnected ? 'rgba(34,197,94,0.3)' : 'rgba(251,191,36,0.3)'}` }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: data?.kvConnected ? '#22c55e' : '#fbbf24' }} />
+              {data?.kvConnected ? 'KV Connected — Data is persistent' : 'In-Memory Mode — Data resets on restart'}
+            </div>
+
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
               {[

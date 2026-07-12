@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rooms } from '@/lib/db';
+import { findRoomByCode, deleteRoom } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,20 +10,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Code is required' }, { status: 400 });
     }
 
-    let foundRoom = null;
-    for (const [, room] of rooms) {
-      if (room.code === code && room.isPermanent) {
-        foundRoom = room;
-        break;
-      }
-    }
+    const foundRoom = await findRoomByCode(code);
 
     if (!foundRoom) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 });
     }
 
+    if (!foundRoom.isPermanent) {
+      return NextResponse.json({ error: 'Not a permanent room' }, { status: 400 });
+    }
+
     if (foundRoom.expiresAt && foundRoom.expiresAt < Date.now()) {
-      rooms.delete(foundRoom.id);
+      await deleteRoom(foundRoom.id);
       return NextResponse.json({ error: 'Room has expired' }, { status: 410 });
     }
 

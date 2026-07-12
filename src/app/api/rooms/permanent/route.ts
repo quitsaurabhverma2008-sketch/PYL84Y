@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { rooms, users } from '@/lib/db';
+import { setRoom, addUser } from '@/lib/db';
 
 function generatePermanentCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       createdAt: Date.now(),
     };
 
-    rooms.set(roomId, room);
-    users.set(userId, user);
+    await setRoom(roomId, room);
+    await addUser(userId, user);
 
     return NextResponse.json({ room, user, permanentCode });
   } catch (error) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { rooms, users } from '@/lib/db';
+import { findRoomByCode, setRoom, addUser } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,13 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Code and username are required' }, { status: 400 });
     }
 
-    let foundRoom = null;
-    for (const [, room] of rooms) {
-      if (room.code === code) {
-        foundRoom = room;
-        break;
-      }
-    }
+    const foundRoom = await findRoomByCode(code);
 
     if (!foundRoom) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 });
@@ -25,6 +19,7 @@ export async function POST(request: NextRequest) {
 
     const userId = uuidv4();
     foundRoom.participants.push(userId);
+    await setRoom(foundRoom.id, foundRoom);
 
     const user = {
       id: userId,
@@ -33,7 +28,7 @@ export async function POST(request: NextRequest) {
       createdAt: Date.now(),
     };
 
-    users.set(userId, user);
+    await addUser(userId, user);
 
     return NextResponse.json({ room: foundRoom, user });
   } catch (error) {

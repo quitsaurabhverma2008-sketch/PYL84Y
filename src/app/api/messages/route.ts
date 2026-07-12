@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { messages } from '@/lib/db';
+import { getRoomMessages, addRoomMessage } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,13 +10,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
     }
 
-    const roomMessages = messages.get(roomId) || [];
+    const roomMessages = await getRoomMessages(roomId);
     const now = Date.now();
     const validMessages = roomMessages.filter(
       (msg) => !msg.expiresAt || msg.expiresAt > now
     );
-
-    messages.set(roomId, validMessages);
 
     return NextResponse.json(validMessages);
   } catch (error) {
@@ -45,10 +43,7 @@ export async function POST(request: NextRequest) {
       expiresAt: type === 'image' ? Date.now() + 30 * 60 * 1000 : undefined,
     };
 
-    if (!messages.has(roomId)) {
-      messages.set(roomId, []);
-    }
-    messages.get(roomId)!.push(message);
+    await addRoomMessage(roomId, message);
 
     return NextResponse.json(message);
   } catch (error) {
