@@ -1,125 +1,119 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
-const hasKV = !!process.env.KV_REST_API_URL;
+const hasStorage = !!(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL);
 
-async function getMap(key: string): Promise<Map<string, any>> {
-  if (!hasKV) return new Map();
-  const data = await kv.get<Record<string, any>>(key);
-  return new Map(Object.entries(data || {}));
+let redis: Redis | null = null;
+if (hasStorage) {
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN!,
+  });
 }
 
-async function saveMap(key: string, map: Map<string, any>): Promise<void> {
-  if (!hasKV) return;
-  const obj: Record<string, any> = {};
-  for (const [k, v] of map) {
-    obj[k] = v;
-  }
-  await kv.set(key, obj);
-}
-
-export async function getRooms(): Promise<Map<string, any>> {
-  return getMap('rooms');
-}
-
-export async function saveRooms(map: Map<string, any>): Promise<void> {
-  await saveMap('rooms', map);
-}
-
-export async function getUsers(): Promise<Map<string, any>> {
-  return getMap('users');
-}
-
-export async function saveUsers(map: Map<string, any>): Promise<void> {
-  await saveMap('users', map);
-}
-
-export async function getMessages(): Promise<Map<string, any[]>> {
-  if (!hasKV) return new Map();
-  const data = await kv.get<Record<string, any[]>>('messages');
-  return new Map(Object.entries(data || {}));
-}
-
-export async function saveMessages(map: Map<string, any[]>): Promise<void> {
-  if (!hasKV) return;
-  const obj: Record<string, any[]> = {};
-  for (const [k, v] of map) {
-    obj[k] = v;
-  }
-  await kv.set('messages', obj);
-}
-
-// In-memory fallback for local dev without KV
+// In-memory fallback for local dev
 const memRooms = new Map<string, any>();
 const memUsers = new Map<string, any>();
 const memMessages = new Map<string, any[]>();
 
+async function getHash(key: string): Promise<Record<string, any>> {
+  if (!redis) return {};
+  const data = await redis.get<Record<string, any>>(key);
+  return data || {};
+}
+
+async function saveHash(key: string, data: Record<string, any>): Promise<void> {
+  if (!redis) return;
+  await redis.set(key, data);
+}
+
 export async function getRoom(roomId: string): Promise<any | null> {
-  const rooms = hasKV ? await getRooms() : memRooms;
-  return rooms.get(roomId) || null;
+  if (redis) {
+    const rooms = await getHash('rooms');
+    return rooms[roomId] || null;
+  }
+  return memRooms.get(roomId) || null;
 }
 
 export async function setRoom(roomId: string, room: any): Promise<void> {
-  if (hasKV) {
-    const rooms = await getRooms();
-    rooms.set(roomId, room);
-    await saveRooms(rooms);
+  if (redis) {
+    const rooms = await getHash('rooms');
+    rooms[roomId] = room;
+    await saveHash('rooms', rooms);
   } else {
     memRooms.set(roomId, room);
   }
 }
 
 export async function findRoomByCode(code: string): Promise<any | null> {
-  const rooms = hasKV ? await getRooms() : memRooms;
-  for (const [, room] of rooms) {
+  if (redis) {
+    const rooms = await getHash('rooms');
+    for (const [, room] of Object.entries(rooms)) {
+      if ((room as any).code === code) return room;
+    }
+    return null;
+  }
+  for (const [, room] of memRooms) {
     if (room.code === code) return room;
   }
   return null;
 }
 
 export async function findPermanentRoomByCode(code: string): Promise<any | null> {
-  const rooms = hasKV ? await getRooms() : memRooms;
-  for (const [, room] of rooms) {
+  if (redis) {
+    const rooms = await getHash('rooms');
+    for (const [, room] of Object.entries(rooms)) {
+      if ((room as any).code === code && (room as any).isPermanent) return room;
+    }
+    return null;
+  }
+  for (const [, room] of memRooms) {
     if (room.code === code && room.isPermanent) return room;
   }
   return null;
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
-  if (hasKV) {
-    const rooms = await getRooms();
-    rooms.delete(roomId);
-    await saveRooms(rooms);
+  if (redis) {
+    const rooms = await getHash('rooms');
+    delete rooms[roomId];
+    await saveHash('rooms', rooms);
   } else {
     memRooms.delete(roomId);
   }
 }
 
 export async function addUser(userId: string, user: any): Promise<void> {
-  if (hasKV) {
-    const users = await getUsers();
-    users.set(userId, user);
-    await saveUsers(users);
+  if (redis) {
+    const users = await getHash('users');
+    users[userId] = user;
+    await saveHash('users', users);
   } else {
     memUsers.set(userId, user);
   }
 }
 
 export async function getUser(userId: string): Promise<any | null> {
-  const users = hasKV ? await getUsers() : memUsers;
-  return users.get(userId) || null;
+  if (redis) {
+    const users = await getHash('users');
+    return users[userId] || null;
+  }
+  return memUsers.get(userId) || null;
 }
 
 export async function getRoomMessages(roomId: string): Promise<any[]> {
-  const all = hasKV ? await getMessages() : memMessages;
-  return all.get(roomId) || [];
+  if (redis) {
+    const all = await getHash('messages');
+    return all[roomId] || [];
+  }
+  return memMessages.get(roomId) || [];
 }
 
 export async function addRoomMessage(roomId: string, message: any): Promise<void> {
-  if (hasKV) {
-    const all = await getMessages();
-    if (!all.has(roomId)) all.set(roomId, []);
-    all.get(roomId)!.push(message);
-    await saveMessages(all);
+  if (redis) {
+    const all = await getHash('messages');
+    if (!all[roomId]) all[roomId] = [];
+    all[roomId].push(message);
+    await saveHash('messages', all);
   } else {
     if (!memMessages.has(roomId)) memMessages.set(roomId, []);
     memMessages.get(roomId)!.push(message);
@@ -127,22 +121,31 @@ export async function addRoomMessage(roomId: string, message: any): Promise<void
 }
 
 export async function getAllRooms(): Promise<any[]> {
-  const rooms = hasKV ? await getRooms() : memRooms;
-  return Array.from(rooms.values());
+  if (redis) {
+    const rooms = await getHash('rooms');
+    return Object.values(rooms);
+  }
+  return Array.from(memRooms.values());
 }
 
 export async function getAllUsers(): Promise<any[]> {
-  const users = hasKV ? await getUsers() : memUsers;
-  return Array.from(users.values());
+  if (redis) {
+    const users = await getHash('users');
+    return Object.values(users);
+  }
+  return Array.from(memUsers.values());
 }
 
 export async function getAllMessages(): Promise<Record<string, any[]>> {
-  const msgs = hasKV ? await getMessages() : memMessages;
+  if (redis) {
+    const all = await getHash('messages');
+    return all as Record<string, any[]>;
+  }
   const result: Record<string, any[]> = {};
-  for (const [k, v] of msgs) {
+  for (const [k, v] of memMessages) {
     result[k] = v;
   }
   return result;
 }
 
-export { hasKV };
+export const hasKV = hasStorage;
