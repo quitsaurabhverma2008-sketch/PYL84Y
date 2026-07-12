@@ -325,7 +325,7 @@ export default function AdminPage() {
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '36px' }}>Admin Dashboard — Enter Password</p>
 
           {passwordError && (
-            <div style={{ background: 'var(--color-danger)1e', border: '1px solid var(--color-danger)40', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px' }} className="animate-scale">
+            <div style={{ background: 'var(--color-danger-10)', border: '1px solid var(--color-danger-25)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px' }} className="animate-scale">
               {passwordError}
             </div>
           )}
@@ -389,7 +389,7 @@ export default function AdminPage() {
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: data?.kvConnected ? 'var(--color-success)' : '#fbbf24', boxShadow: `0 0 8px ${data?.kvConnected ? 'rgba(34,197,94,0.5)' : 'rgba(251,191,36,0.5)'}` }} />
                 {data?.kvConnected ? 'Upstash Connected' : 'In-Memory Mode'}
               </div>
-              <div style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--color-danger)14', border: '1px solid var(--color-danger)33', backdropFilter: 'blur(10px)' }}>
+              <div style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--color-danger-10)', border: '1px solid var(--color-danger-20)', backdropFilter: 'blur(10px)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>Next cleanup: <strong style={{ color: '#fca5a5', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-heading)' }}>{countdown}</strong></span>
               </div>
@@ -449,7 +449,7 @@ export default function AdminPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {filteredRooms.map(room => (
                   <div data-admin-animate key={room.id} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', overflow: 'hidden', backdropFilter: 'blur(10px)', transition: 'border-color 0.2s' }}
-                    onMouseOver={e => e.currentTarget.style.borderColor = 'var(--color-primary)4d'}
+                    onMouseOver={e => e.currentTarget.style.borderColor = 'var(--color-primary-30)'}
                     onMouseOut={e => e.currentTarget.style.borderColor = 'var(--color-card-border)'}>
                     {/* Room Header */}
                     <div
@@ -482,7 +482,7 @@ export default function AdminPage() {
                           onClick={(e) => { e.stopPropagation(); downloadSingleRoom(room); }}
                           disabled={downloadingRoom === room.id}
                           style={{
-                            background: 'var(--color-primary)1e', border: '1px solid var(--color-primary)40',
+                            background: 'var(--color-primary-10)', border: '1px solid var(--color-primary-25)',
                             color: 'var(--color-primary)', padding: '6px 14px', borderRadius: '10px', fontSize: '12px',
                             fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s',
                             display: 'flex', alignItems: 'center', gap: '4px',

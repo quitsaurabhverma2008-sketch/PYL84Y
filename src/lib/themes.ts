@@ -20,6 +20,20 @@ export interface ColorCombo {
   danger: string;
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function isLightColor(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r * 0.299 + g * 0.587 + b * 0.114) > 150;
+}
+
 export const COLOR_COMBOS: ColorCombo[] = [
   { id: 'default', name: 'Deep Space', primary: '#2563EB', secondary: '#6366F1', accent: '#059669', bg: '#0F172A', bgAlt: '#1E293B', card: 'rgba(30,41,59,0.6)', cardBorder: 'rgba(51,65,85,0.5)', text: '#F8FAFC', textMuted: 'rgba(248,250,252,0.4)', msgOwn: 'linear-gradient(135deg,#2563EB,#6366F1)', msgOwnText: '#FFFFFF', msgOther: 'rgba(30,41,59,0.6)', msgOtherText: '#F8FAFC', inputBg: '#1E293B', inputBorder: '#334155', success: '#22C55E', danger: '#EF4444' },
   { id: 'xanthous-burgundy', name: 'Xanthous & Burgundy', primary: '#FFD700', secondary: '#800020', accent: '#FF6B35', bg: '#1A0A0A', bgAlt: '#2D1111', card: 'rgba(128,0,32,0.15)', cardBorder: 'rgba(255,215,0,0.2)', text: '#FFF5E6', textMuted: 'rgba(255,245,230,0.4)', msgOwn: 'linear-gradient(135deg,#FFD700,#FF8C00)', msgOwnText: '#1A0A0A', msgOther: 'rgba(128,0,32,0.2)', msgOtherText: '#FFF5E6', inputBg: '#2D1111', inputBorder: 'rgba(255,215,0,0.15)', success: '#22C55E', danger: '#EF4444' },
@@ -108,4 +122,46 @@ export function applyTheme(combo: ColorCombo) {
   root.style.setProperty('--color-input-border', combo.inputBorder);
   root.style.setProperty('--color-success', combo.success);
   root.style.setProperty('--color-danger', combo.danger);
+
+  // Derived colors with alpha
+  root.style.setProperty('--color-on-primary', isLightColor(combo.primary) ? '#000000' : '#FFFFFF');
+  root.style.setProperty('--color-glow', hexToRgba(combo.primary, 0.15));
+  root.style.setProperty('--color-glow-strong', hexToRgba(combo.primary, 0.35));
+  root.style.setProperty('--color-overlay', hexToRgba(combo.bg, 0.92));
+  root.style.setProperty('--color-surface', hexToRgba(combo.bgAlt, 0.8));
+  root.style.setProperty('--color-muted', combo.bgAlt);
+
+  // Primary alphas
+  root.style.setProperty('--color-primary-10', hexToRgba(combo.primary, 0.1));
+  root.style.setProperty('--color-primary-15', hexToRgba(combo.primary, 0.15));
+  root.style.setProperty('--color-primary-20', hexToRgba(combo.primary, 0.2));
+  root.style.setProperty('--color-primary-25', hexToRgba(combo.primary, 0.25));
+  root.style.setProperty('--color-primary-30', hexToRgba(combo.primary, 0.3));
+  root.style.setProperty('--color-primary-40', hexToRgba(combo.primary, 0.4));
+  root.style.setProperty('--color-primary-60', hexToRgba(combo.primary, 0.6));
+
+  // Secondary alphas
+  root.style.setProperty('--color-secondary-10', hexToRgba(combo.secondary, 0.1));
+  root.style.setProperty('--color-secondary-20', hexToRgba(combo.secondary, 0.2));
+
+  // Accent alphas
+  root.style.setProperty('--color-accent-10', hexToRgba(combo.accent, 0.1));
+  root.style.setProperty('--color-accent-15', hexToRgba(combo.accent, 0.15));
+  root.style.setProperty('--color-accent-20', hexToRgba(combo.accent, 0.2));
+  root.style.setProperty('--color-accent-25', hexToRgba(combo.accent, 0.25));
+  root.style.setProperty('--color-accent-30', hexToRgba(combo.accent, 0.3));
+  root.style.setProperty('--color-accent-40', hexToRgba(combo.accent, 0.4));
+
+  // Danger alphas
+  root.style.setProperty('--color-danger-10', hexToRgba(combo.danger, 0.1));
+  root.style.setProperty('--color-danger-15', hexToRgba(combo.danger, 0.15));
+  root.style.setProperty('--color-danger-20', hexToRgba(combo.danger, 0.2));
+  root.style.setProperty('--color-danger-25', hexToRgba(combo.danger, 0.25));
+  root.style.setProperty('--color-danger-30', hexToRgba(combo.danger, 0.3));
+  root.style.setProperty('--color-danger-40', hexToRgba(combo.danger, 0.4));
+  root.style.setProperty('--color-danger-60', hexToRgba(combo.danger, 0.6));
+
+  // Success alphas
+  root.style.setProperty('--color-success-10', hexToRgba(combo.success, 0.1));
+  root.style.setProperty('--color-success-25', hexToRgba(combo.success, 0.25));
 }

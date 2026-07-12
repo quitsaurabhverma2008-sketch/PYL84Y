@@ -144,7 +144,7 @@ export default function LoginPage() {
       <div ref={containerRef} style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '48px' }} data-animate>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '20px', background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(99,102,241,0.2))', border: '1px solid rgba(37,99,235,0.3)', marginBottom: '20px', backdropFilter: 'blur(10px)' }} className="animate-glow">
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--color-primary-20), var(--color-secondary-20))', border: '1px solid var(--color-primary-30)', marginBottom: '20px', backdropFilter: 'blur(10px)' }} className="animate-glow">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#logo-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--color-primary)"/><stop offset="100%" stopColor="var(--color-secondary)"/></linearGradient></defs>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -155,7 +155,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div style={{ background: 'var(--color-danger)1e', border: '1px solid var(--color-danger)40', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px', backdropFilter: 'blur(10px)' }} className="animate-scale">
+          <div style={{ background: 'var(--color-danger-10)', border: '1px solid var(--color-danger-25)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px', backdropFilter: 'blur(10px)' }} className="animate-scale">
             {error}
           </div>
         )}

@@ -378,7 +378,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '6px' }}>{callType === 'video' ? 'Incoming Video Call' : 'Incoming Voice Call'}</p>
           </div>
           <div style={{ display: 'flex', gap: '32px', marginTop: '16px' }}>
-            <button onClick={declineCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-danger), #b91c1c)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger)4d', transition: 'transform 0.2s' }}
+            <button onClick={declineCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-danger), #b91c1c)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger-30)', transition: 'transform 0.2s' }}
               onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
               onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
@@ -415,7 +415,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
             <p style={{ fontSize: '20px', fontWeight: '700', fontFamily: 'var(--font-heading)' }}>Calling...</p>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '4px' }}>Waiting for answer</p>
           </div>
-          <button onClick={endCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-danger), #b91c1c)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger)4d', zIndex: 2, transition: 'transform 0.2s' }}
+          <button onClick={endCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-danger), #b91c1c)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger-30)', zIndex: 2, transition: 'transform 0.2s' }}
             onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
             onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
@@ -436,7 +436,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
                 <video ref={localVideoRef} autoPlay playsInline muted style={{ width: '110px', height: '150px', borderRadius: '14px', border: '2px solid rgba(255,255,255,0.3)', objectFit: 'cover' }} />
               </div>
               <div style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '20px', zIndex: 2 }}>
-                <button onClick={endCall} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--color-danger)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px var(--color-danger)66' }}>
+                <button onClick={endCall} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--color-danger)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px var(--color-danger-40)' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
                 </button>
               </div>
@@ -447,7 +447,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
               <p style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>{formatDuration(callDuration)}</p>
-              <button onClick={endCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-danger)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger)4d' }}>
+              <button onClick={endCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-danger)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger-30)' }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
               </button>
             </div>
@@ -472,11 +472,11 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         <div style={{ display: 'flex', gap: '6px' }}>
           {!isInCall && (
             <>
-              <button onClick={() => initiateCall('voice')} style={{ background: 'var(--color-accent)26', border: '1px solid var(--color-accent)4d', color: 'var(--color-accent)', cursor: 'pointer', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button onClick={() => initiateCall('voice')} style={{ background: 'var(--color-accent-15)', border: '1px solid var(--color-accent-30)', color: 'var(--color-accent)', cursor: 'pointer', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 Voice
               </button>
-              <button onClick={() => initiateCall('video')} style={{ background: 'var(--color-primary)26', border: '1px solid var(--color-primary)4d', color: 'var(--color-primary)', cursor: 'pointer', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button onClick={() => initiateCall('video')} style={{ background: 'var(--color-primary-15)', border: '1px solid var(--color-primary-30)', color: 'var(--color-primary)', cursor: 'pointer', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                 Video
               </button>
