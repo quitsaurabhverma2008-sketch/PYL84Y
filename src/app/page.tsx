@@ -146,16 +146,16 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginBottom: '48px' }} data-animate>
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '20px', background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(99,102,241,0.2))', border: '1px solid rgba(37,99,235,0.3)', marginBottom: '20px', backdropFilter: 'blur(10px)' }} className="animate-glow">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#logo-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#6366F1"/></linearGradient></defs>
+              <defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--color-primary)"/><stop offset="100%" stopColor="var(--color-secondary)"/></linearGradient></defs>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
           <h1 style={{ fontSize: 'clamp(40px, 8vw, 56px)', fontWeight: '900', letterSpacing: '-3px', lineHeight: 1 }} className="text-gradient">PYL84Y</h1>
-          <p style={{ color: 'rgba(248,250,252,0.4)', fontSize: '15px', marginTop: '12px', fontWeight: 500, letterSpacing: '2px', textTransform: 'uppercase' }}>Chat · Voice · Video</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', marginTop: '12px', fontWeight: 500, letterSpacing: '2px', textTransform: 'uppercase' }}>Chat · Voice · Video</p>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px', backdropFilter: 'blur(10px)' }} className="animate-scale">
+          <div style={{ background: 'var(--color-danger)1e', border: '1px solid var(--color-danger)40', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px', backdropFilter: 'blur(10px)' }} className="animate-scale">
             {error}
           </div>
         )}
@@ -171,9 +171,9 @@ export default function LoginPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Permanent Room
             </button>
-            <div data-animate style={{ marginTop: '20px', padding: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', fontSize: '13px', color: 'rgba(248,250,252,0.45)', lineHeight: '1.7', backdropFilter: 'blur(10px)' }}>
-              <p><strong style={{ color: 'rgba(248,250,252,0.7)' }}>Non-Permanent:</strong> Quick rooms, 4-digit code, chats saved 24hrs</p>
-              <p style={{ marginTop: '6px' }}><strong style={{ color: 'rgba(248,250,252,0.7)' }}>Permanent:</strong> 7-day ID, searchable code, full profile</p>
+            <div data-animate style={{ marginTop: '20px', padding: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.7', backdropFilter: 'blur(10px)' }}>
+              <p><strong style={{ color: 'var(--color-foreground)', opacity: 0.7 }}>Non-Permanent:</strong> Quick rooms, 4-digit code, chats saved 24hrs</p>
+              <p style={{ marginTop: '6px' }}><strong style={{ color: 'var(--color-foreground)', opacity: 0.7 }}>Permanent:</strong> 7-day ID, searchable code, full profile</p>
             </div>
           </div>
         )}
@@ -181,12 +181,12 @@ export default function LoginPage() {
         {/* NON-PERMANENT CREATE */}
         {mode === 'nonperm-create' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <button data-animate onClick={() => { setMode('home'); setError(''); setName(''); }} style={{ background: 'none', border: 'none', color: 'rgba(248,250,252,0.4)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button data-animate onClick={() => { setMode('home'); setError(''); setName(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
             <h2 data-animate style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px' }}>Quick Room</h2>
-            <p data-animate style={{ color: 'rgba(248,250,252,0.4)', fontSize: '14px' }}>Create a temporary room. Share the 4-digit code with friends.</p>
+            <p data-animate style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Create a temporary room. Share the 4-digit code with friends.</p>
             <input data-animate className="input-field" placeholder="Your Name" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleNonPermCreate()} />
             <button data-animate className="btn-primary" onClick={handleNonPermCreate} disabled={loading}>
               {loading ? 'Creating...' : 'Create Room'}
@@ -197,14 +197,14 @@ export default function LoginPage() {
         {/* NON-PERMANENT JOIN */}
         {mode === 'nonperm-join' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <button data-animate onClick={() => { setMode('home'); setError(''); setName(''); setCode(''); }} style={{ background: 'none', border: 'none', color: 'rgba(248,250,252,0.4)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button data-animate onClick={() => { setMode('home'); setError(''); setName(''); setCode(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
             <h2 data-animate style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px' }}>Join Room</h2>
-            <p data-animate style={{ color: 'rgba(248,250,252,0.4)', fontSize: '14px' }}>Enter the 4-digit code shared with you</p>
+            <p data-animate style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Enter the 4-digit code shared with you</p>
             <input data-animate className="input-field" placeholder="Your Name" value={name} onChange={e => setName(e.target.value)} />
-            <input data-animate className="input-field" placeholder="4-Digit Code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))} onKeyDown={e => e.key === 'Enter' && handleNonPermJoin()} style={{ textAlign: 'center', fontSize: '28px', letterSpacing: '10px', fontWeight: '800', fontFamily: "'Nunito', sans-serif" }} />
+            <input data-animate className="input-field" placeholder="4-Digit Code" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))} onKeyDown={e => e.key === 'Enter' && handleNonPermJoin()} style={{ textAlign: 'center', fontSize: '28px', letterSpacing: '10px', fontWeight: '800', fontFamily: "var(--font-heading)" }} />
             <button data-animate className="btn-primary" onClick={handleNonPermJoin} disabled={loading}>
               {loading ? 'Joining...' : 'Join Room'}
             </button>
@@ -214,7 +214,7 @@ export default function LoginPage() {
         {/* PERMANENT WARNING */}
         {mode === 'perm-warning' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <button data-animate onClick={() => { setMode('home'); setError(''); }} style={{ background: 'none', border: 'none', color: 'rgba(248,250,252,0.4)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button data-animate onClick={() => { setMode('home'); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
@@ -223,12 +223,12 @@ export default function LoginPage() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 Permanent Room Info
               </h2>
-              <ul style={{ color: 'rgba(248,250,252,0.65)', fontSize: '14px', lineHeight: '2', listStyle: 'none', padding: 0 }}>
+              <ul style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: '2', listStyle: 'none', padding: 0 }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#fbbf24' }}>•</span> Your ID is valid for <strong style={{ color: '#fbbf24' }}>7 days only</strong></li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#ef4444' }}>•</span> After 7 days, your ID <strong style={{ color: '#ef4444' }}>auto-deletes</strong></li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'rgba(248,250,252,0.4)' }}>•</span> You need to provide Gmail, Phone & Name</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'rgba(248,250,252,0.4)' }}>•</span> Others can search your code to chat</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'rgba(248,250,252,0.4)' }}>•</span> Chats saved for 24 hours</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-danger)' }}>•</span> After 7 days, your ID <strong style={{ color: 'var(--color-danger)' }}>auto-deletes</strong></li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> You need to provide Gmail, Phone & Name</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> Others can search your code to chat</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> Chats saved for 24 hours</li>
               </ul>
             </div>
             <button data-animate className="btn-primary" onClick={() => setMode('perm-create-form')}>
@@ -240,7 +240,7 @@ export default function LoginPage() {
         {/* PERMANENT CREATE FORM */}
         {mode === 'perm-create-form' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <button data-animate onClick={() => { setMode('perm-warning'); setError(''); }} style={{ background: 'none', border: 'none', color: 'rgba(248,250,252,0.4)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button data-animate onClick={() => { setMode('perm-warning'); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
@@ -258,9 +258,9 @@ export default function LoginPage() {
         {mode === 'perm-create' && roomCode && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div data-animate className="card animate-glow" style={{ textAlign: 'center' }}>
-              <p style={{ color: 'rgba(248,250,252,0.4)', fontSize: '13px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}>Your Permanent Code</p>
-              <p style={{ fontSize: '40px', fontWeight: '900', letterSpacing: '8px', fontFamily: "'Nunito', sans-serif" }} className="text-gradient">{roomCode}</p>
-              <p style={{ color: 'rgba(248,250,252,0.35)', fontSize: '12px', marginTop: '10px' }}>Valid for 7 days. Share this code with others.</p>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}>Your Permanent Code</p>
+              <p style={{ fontSize: '40px', fontWeight: '900', letterSpacing: '8px', fontFamily: "var(--font-heading)" }} className="text-gradient">{roomCode}</p>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginTop: '10px' }}>Valid for 7 days. Share this code with others.</p>
             </div>
             <button data-animate className="btn-primary" onClick={() => {
               const room = JSON.parse(localStorage.getItem('pyl84y_room') || '{}');
@@ -278,7 +278,7 @@ export default function LoginPage() {
         {/* Bottom buttons for join - shown on home */}
         {mode === 'home' && (
           <div style={{ width: '100%', marginTop: '28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div data-animate style={{ textAlign: 'center', color: 'rgba(248,250,252,0.25)', fontSize: '12px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}>Have a code?</div>
+            <div data-animate style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}>Have a code?</div>
             <button data-animate onClick={() => setMode('nonperm-join')} className="btn-secondary" style={{ fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
               Join with 4-Digit Code
@@ -294,14 +294,14 @@ export default function LoginPage() {
         {mode === 'perm-join' && (
           <div style={{ position: 'fixed', inset: 0, background: 'var(--color-background)', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }} className="animate-in">
             <div style={{ width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <button data-animate onClick={() => { setMode('home'); setError(''); setName(''); setCode(''); }} style={{ background: 'none', border: 'none', color: 'rgba(248,250,252,0.4)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button data-animate onClick={() => { setMode('home'); setError(''); setName(''); setCode(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 Back
               </button>
               <h2 data-animate style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px' }}>Join Permanent Room</h2>
-              <p data-animate style={{ color: 'rgba(248,250,252,0.4)', fontSize: '14px' }}>Search and join a permanent room by code</p>
+              <p data-animate style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Search and join a permanent room by code</p>
               <input data-animate className="input-field" placeholder="Your Name" value={name} onChange={e => setName(e.target.value)} />
-              <input data-animate className="input-field" placeholder="Permanent Room Code" value={code} onChange={e => setCode(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: '700', fontFamily: "'Nunito', sans-serif" }} />
+              <input data-animate className="input-field" placeholder="Permanent Room Code" value={code} onChange={e => setCode(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: '700', fontFamily: "var(--font-heading)" }} />
               <button data-animate className="btn-primary" onClick={handlePermJoin} disabled={loading}>
                 {loading ? 'Searching...' : 'Join Room'}
               </button>
@@ -312,9 +312,9 @@ export default function LoginPage() {
 
       {/* Admin Link */}
       <div style={{ position: 'fixed', bottom: '16px', right: '16px', zIndex: 10 }}>
-        <a href="/admin" style={{ color: 'rgba(248,250,252,0.12)', fontSize: '12px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s' }}
-          onMouseOver={e => (e.currentTarget.style.color = 'rgba(248,250,252,0.4)')}
-          onMouseOut={e => (e.currentTarget.style.color = 'rgba(248,250,252,0.12)')}>
+        <a href="/admin" style={{ color: 'var(--color-text-muted)', fontSize: '12px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s', opacity: 0.3 }}
+          onMouseOver={e => (e.currentTarget.style.opacity = '0.7')}
+          onMouseOut={e => (e.currentTarget.style.opacity = '0.3')}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           Admin
         </a>

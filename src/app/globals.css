@@ -1,7 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Nunito:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
+  --font-body: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Outfit', 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
   --color-primary: #2563EB;
   --color-on-primary: #FFFFFF;
   --color-secondary: #6366F1;
@@ -23,6 +27,10 @@
   --color-input-border: #334155;
   --color-success: #22C55E;
   --color-danger: #EF4444;
+  --color-glow: rgba(37, 99, 235, 0.15);
+  --color-glow-strong: rgba(37, 99, 235, 0.35);
+  --color-overlay: rgba(15, 23, 42, 0.92);
+  --color-surface: rgba(30, 41, 59, 0.8);
 }
 
 * {
@@ -32,21 +40,42 @@
 }
 
 body {
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   background: var(--color-background);
   color: var(--color-foreground);
   min-height: 100dvh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Nunito', 'DM Sans', sans-serif;
+  font-family: var(--font-heading);
 }
 
 input:focus, textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 0 0 3px var(--color-glow);
+}
+
+::selection {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }
 
 .btn-primary {
@@ -57,6 +86,7 @@ input:focus, textarea:focus {
   border-radius: 14px;
   font-size: 16px;
   font-weight: 700;
+  font-family: var(--font-body);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
@@ -75,7 +105,7 @@ input:focus, textarea:focus {
 
 .btn-primary:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 12px 32px var(--color-glow-strong);
 }
 
 .btn-primary:hover::before {
@@ -101,6 +131,7 @@ input:focus, textarea:focus {
   border-radius: 14px;
   font-size: 16px;
   font-weight: 600;
+  font-family: var(--font-body);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
@@ -108,19 +139,20 @@ input:focus, textarea:focus {
 }
 
 .btn-secondary:hover {
-  background: rgba(51, 65, 85, 0.5);
+  background: var(--color-surface);
   border-color: var(--color-primary);
   transform: translateY(-1px);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #ef4444, var(--color-destructive));
+  background: linear-gradient(135deg, var(--color-danger), #b91c1c);
   color: white;
   border: none;
   padding: 14px 28px;
   border-radius: 14px;
   font-size: 16px;
   font-weight: 700;
+  font-family: var(--font-body);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -142,21 +174,22 @@ input:focus, textarea:focus {
   width: 100%;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-muted);
+  border: 1px solid var(--color-input-border);
+  background: var(--color-input-bg);
   color: var(--color-foreground);
   font-size: 16px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .input-field::placeholder {
-  color: rgba(248, 250, 252, 0.35);
+  color: var(--color-text-muted);
 }
 
 .input-field:focus {
   border-color: var(--color-primary);
-  background: rgba(30, 41, 59, 0.8);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px var(--color-glow);
 }
 
 @keyframes fadeIn {
@@ -180,8 +213,8 @@ input:focus, textarea:focus {
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.15); }
-  50% { box-shadow: 0 0 40px rgba(37, 99, 235, 0.25); }
+  0%, 100% { box-shadow: 0 0 20px var(--color-glow); }
+  50% { box-shadow: 0 0 40px var(--color-glow-strong); }
 }
 
 @keyframes float {
@@ -274,13 +307,15 @@ input:focus, textarea:focus {
 .message-own {
   align-self: flex-end;
   background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: var(--color-msg-own-text);
   border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 16px var(--color-glow);
 }
 
 .message-other {
   align-self: flex-start;
   background: var(--color-card);
+  color: var(--color-msg-other-text);
   border: 1px solid var(--color-card-border);
   border-bottom-left-radius: 4px;
   backdrop-filter: blur(10px);
@@ -290,7 +325,7 @@ input:focus, textarea:focus {
   align-self: center;
   background: var(--color-muted);
   font-size: 12px;
-  color: rgba(248, 250, 252, 0.4);
+  color: var(--color-text-muted);
   padding: 4px 14px;
   border-radius: 20px;
   border: 1px solid var(--color-card-border);
@@ -298,7 +333,7 @@ input:focus, textarea:focus {
 
 .input-area {
   padding: 12px 16px;
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--color-overlay);
   border-top: 1px solid var(--color-border);
   display: flex;
   gap: 10px;
@@ -315,7 +350,7 @@ input:focus, textarea:focus {
 .call-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.98);
+  background: var(--color-background);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -338,13 +373,13 @@ input:focus, textarea:focus {
 }
 
 .gradient-animated {
-  background: linear-gradient(135deg, #2563EB, #6366F1, #059669, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent), var(--color-primary));
   background-size: 300% 300%;
   animation: gradientShift 6s ease infinite;
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), #a78bfa);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
