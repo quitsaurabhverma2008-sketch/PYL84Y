@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { animate } from 'animejs';
+import { applyTheme, getComboById } from '@/lib/themes';
 
 const ParticleBackground = dynamic(() => import('@/components/ParticleBackground'), { ssr: false });
 
@@ -18,6 +19,18 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('pyl84y_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.prefs?.themeId) {
+          applyTheme(getComboById(user.prefs.themeId));
+        }
+      } catch {}
+    }
+  }, []);
 
   useEffect(() => {
     if (containerRef.current) {

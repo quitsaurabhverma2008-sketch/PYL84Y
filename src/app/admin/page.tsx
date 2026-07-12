@@ -37,6 +37,13 @@ interface RoomData {
   userDetails: UserData[];
   messageCount: number;
   messages: MessageData[];
+  themeHistory: Array<{
+    userId: string;
+    name: string;
+    themeId: string | null;
+    chatBg: string | null;
+    comboHistory: Array<{ themeId: string; changedAt: number }>;
+  }>;
 }
 
 interface DashboardData {
@@ -498,6 +505,30 @@ export default function AdminPage() {
                             ))}
                           </div>
                         </div>
+
+                        {room.themeHistory.length > 0 && (
+                          <div style={{ marginTop: '16px' }}>
+                            <h4 style={{ fontSize: '12px', color: 'rgba(248,250,252,0.3)', marginBottom: '10px', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' }}>Theme History</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {room.themeHistory.map(th => (
+                                <div key={th.userId} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                                  <p style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{th.name}</p>
+                                  {th.themeId && <p style={{ fontSize: '12px', color: 'rgba(248,250,252,0.4)' }}>Current: <span style={{ color: '#818cf8', fontWeight: '600' }}>{th.themeId}</span></p>}
+                                  {th.chatBg && <p style={{ fontSize: '12px', color: 'rgba(248,250,252,0.4)' }}>Chat BG: <span style={{ color: '#22c55e', fontWeight: '600' }}>Custom</span></p>}
+                                  {th.comboHistory.length > 0 && (
+                                    <div style={{ marginTop: '6px' }}>
+                                      {th.comboHistory.slice(-5).reverse().map((h, i) => (
+                                        <p key={i} style={{ fontSize: '11px', color: 'rgba(248,250,252,0.25)' }}>
+                                          {new Date(h.changedAt).toLocaleString()} — <span style={{ color: 'rgba(248,250,252,0.45)' }}>{h.themeId}</span>
+                                        </p>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {room.messages.length > 0 && (
                           <div style={{ marginTop: '16px' }}>

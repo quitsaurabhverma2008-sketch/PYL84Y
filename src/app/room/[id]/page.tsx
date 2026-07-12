@@ -4,6 +4,10 @@ import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { animate } from 'animejs';
+import { applyTheme, getComboById } from '@/lib/themes';
+import ThemePicker from '@/components/ThemePicker';
+import ChatBgPicker from '@/components/ChatBgPicker';
+import { useTheme } from '@/components/ThemeProvider';
 
 const ChatBackground = dynamic(() => import('@/components/ChatBackground'), { ssr: false });
 
@@ -79,6 +83,10 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => { callStateRef.current = callState; }, [callState]);
 
+  const [chatBg, setChatBg] = useState<string | null>(null);
+  const { setCombo, setShowThemePicker, setShowChatBgPicker, isPermanent, combo: themeCombo } = useTheme();
+  const [showRoomSettings, setShowRoomSettings] = useState(false);
+
   useEffect(() => {
     const storedRoom = localStorage.getItem('pyl84y_room');
     const storedUser = localStorage.getItem('pyl84y_user');
@@ -88,6 +96,8 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
     if (parsedRoom.id !== id) { router.push('/'); return; }
     setRoom(parsedRoom);
     setUser(parsedUser);
+    if (parsedUser.prefs?.themeId) applyTheme(getComboById(parsedUser.prefs.themeId));
+    if (parsedUser.prefs?.chatBg) setChatBg(parsedUser.prefs.chatBg);
   }, [id, router]);
 
   const scrollToBottom = useCallback(() => {
@@ -494,6 +504,27 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download Chat
           </button>
+          {room.isPermanent && (
+            <>
+              <div style={{ height: '1px', background: 'var(--color-card-border)', margin: '4px 8px' }} />
+              <button onClick={() => { setShowThemePicker(true); setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: 'var(--color-foreground)', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')} onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="12" r="2.5" /><circle cx="8" cy="18" r="2.5" /><circle cx="16" cy="18" r="2.5" /></svg>
+                Color Theme
+                <div style={{ display: 'flex', gap: '3px', marginLeft: 'auto' }}>
+                  {[themeCombo.primary, themeCombo.secondary].map((c, i) => (
+                    <div key={i} style={{ width: '12px', height: '12px', borderRadius: '4px', background: c, border: '1px solid rgba(255,255,255,0.2)' }} />
+                  ))}
+                </div>
+              </button>
+              <button onClick={() => { setShowChatBgPicker(true); setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: 'var(--color-foreground)', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')} onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Chat Background
+                {chatBg ? <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#22c55e', fontWeight: 600 }}>ON</span> : <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'rgba(248,250,252,0.2)' }}>OFF</span>}
+              </button>
+            </>
+          )}
           <div style={{ height: '1px', background: 'var(--color-card-border)', margin: '4px 8px' }} />
           <button onClick={() => { setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.1)')} onMouseOut={e => (e.currentTarget.style.background = 'none')}>
@@ -516,7 +547,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       {/* MESSAGES */}
-      <div className="messages-area" ref={messagesRef}>
+      <div className="messages-area" ref={messagesRef} style={chatBg ? { backgroundImage: `url(${chatBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundBlendMode: 'multiply', backgroundColor: 'rgba(15,23,42,0.85)' } : undefined}>
         {messages.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '14px', color: 'rgba(248,250,252,0.25)' }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -570,6 +601,10 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
           Expires {new Date(room.expiresAt).toLocaleString()}
         </div>
       )}
+
+      {/* THEME PICKERS */}
+      <ThemePicker />
+      <ChatBgPicker />
     </div>
   );
 }

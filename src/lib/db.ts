@@ -212,4 +212,39 @@ export async function getAllMessages(): Promise<Record<string, any[]>> {
   return result;
 }
 
+// === User Preferences ===
+
+export async function getUserPreferences(userId: string): Promise<{ themeId?: string; chatBg?: string; comboHistory?: Array<{ themeId: string; changedAt: number }> }> {
+  if (redis) {
+    const data = await getHash('userPreferences');
+    return data[userId] || {};
+  }
+  return {};
+}
+
+export async function setUserPreferences(userId: string, prefs: { themeId?: string; chatBg?: string; comboHistory?: Array<{ themeId: string; changedAt: number }> }): Promise<void> {
+  if (redis) {
+    const all = await getHash('userPreferences');
+    all[userId] = prefs;
+    await saveHash('userPreferences', all);
+  }
+}
+
+export async function appendComboHistory(userId: string, themeId: string): Promise<void> {
+  const prefs = await getUserPreferences(userId);
+  const history = prefs.comboHistory || [];
+  history.push({ themeId, changedAt: Date.now() });
+  if (history.length > 50) history.splice(0, history.length - 50);
+  prefs.comboHistory = history;
+  prefs.themeId = themeId;
+  await setUserPreferences(userId, prefs);
+}
+
+export async function getAllUserPreferences(): Promise<Record<string, any>> {
+  if (redis) {
+    return await getHash('userPreferences');
+  }
+  return {};
+}
+
 export const hasKV = hasStorage;

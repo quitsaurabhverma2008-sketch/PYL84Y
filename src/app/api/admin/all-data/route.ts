@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllRooms, getAllUsers, getAllMessages, hasKV, getNextCleanupTime, runCleanupIfNeeded } from '@/lib/db';
+import { getAllRooms, getAllUsers, getAllMessages, hasKV, getNextCleanupTime, runCleanupIfNeeded, getAllUserPreferences } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +11,7 @@ export async function GET() {
     const allUsers = await getAllUsers();
     const allMessages = await getAllMessages();
     const nextCleanup = await getNextCleanupTime();
+    const allPrefs = await getAllUserPreferences();
 
     const roomDetails = allRooms.map(room => {
       const roomUsers = allUsers.filter(u =>
@@ -18,11 +19,20 @@ export async function GET() {
       );
       const roomMessages = allMessages[room.id] || [];
 
+      const userPrefs = roomUsers.map(u => ({
+        userId: u.id,
+        name: u.name,
+        themeId: allPrefs[u.id]?.themeId || null,
+        chatBg: allPrefs[u.id]?.chatBg || null,
+        comboHistory: allPrefs[u.id]?.comboHistory || [],
+      })).filter(p => p.themeId || p.comboHistory.length > 0);
+
       return {
         ...room,
         userDetails: roomUsers,
         messageCount: roomMessages.length,
         messages: roomMessages,
+        themeHistory: userPrefs,
       };
     });
 

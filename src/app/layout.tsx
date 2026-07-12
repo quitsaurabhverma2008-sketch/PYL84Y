@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import ThemeProviderWrap from "@/components/ThemeProviderWrap";
 
 export const metadata: Metadata = {
   title: "PYL84Y",
@@ -21,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeProviderWrap>{children}</ThemeProviderWrap>
+      </body>
     </html>
   );
 }

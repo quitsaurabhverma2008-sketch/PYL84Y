@@ -13,6 +13,16 @@
   --color-destructive: #DC2626;
   --color-card: rgba(30, 41, 59, 0.6);
   --color-card-border: rgba(51, 65, 85, 0.5);
+  --color-bg-alt: #1E293B;
+  --color-text-muted: rgba(248, 250, 252, 0.4);
+  --color-msg-own: linear-gradient(135deg, #2563EB, #6366F1);
+  --color-msg-own-text: #FFFFFF;
+  --color-msg-other: rgba(30, 41, 59, 0.6);
+  --color-msg-other-text: #F8FAFC;
+  --color-input-bg: #1E293B;
+  --color-input-border: #334155;
+  --color-success: #22C55E;
+  --color-danger: #EF4444;
 }
 
 * {
