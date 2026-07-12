@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "PYL84Y",
-  description: "Chat, Voice & Video Calls",
+  description: "Chat, Voice & Video Calls — Real-time communication platform",
 };
 
 export const viewport: Viewport = {
@@ -11,6 +11,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#0F172A",
 };
 
 export default function RootLayout({

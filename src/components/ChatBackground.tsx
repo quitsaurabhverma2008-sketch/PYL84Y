@@ -1,0 +1,123 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
+
+export default function ChatBackground() {
+  const mountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mountRef.current) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    mountRef.current.appendChild(renderer.domElement);
+
+    const gridGeo = new THREE.PlaneGeometry(30, 30, 30, 30);
+    const gridMat = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float uTime;
+        void main() {
+          float grid = 0.0;
+          float scaleX = step(0.98, fract(vUv.x * 20.0));
+          float scaleY = step(0.98, fract(vUv.y * 20.0));
+          grid = max(scaleX, scaleY);
+          float wave = sin(vUv.x * 6.28 + uTime * 0.5) * 0.02;
+          float alpha = grid * 0.08 * (1.0 - length(vUv - 0.5) * 1.5);
+          gl_FragColor = vec4(0.15, 0.39, 0.92, alpha);
+        }
+      `,
+      uniforms: {
+        uTime: { value: 0 },
+      },
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
+    const grid = new THREE.Mesh(gridGeo, gridMat);
+    grid.rotation.x = -Math.PI / 2;
+    grid.position.y = -5;
+    scene.add(grid);
+
+    const glowCount = 8;
+    const glows: THREE.Mesh[] = [];
+    for (let i = 0; i < glowCount; i++) {
+      const geo = new THREE.SphereGeometry(0.1 + Math.random() * 0.15, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({
+        color: i % 2 === 0 ? '#2563EB' : '#6366F1',
+        transparent: true,
+        opacity: 0.15,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 8, -2);
+      scene.add(mesh);
+      glows.push(mesh);
+    }
+
+    camera.position.set(0, 0, 6);
+
+    let animId: number;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+      gridMat.uniforms.uTime.value = t;
+
+      glows.forEach((g, i) => {
+        g.position.x = Math.sin(t * 0.4 + i * 1.2) * 5;
+        g.position.y = Math.cos(t * 0.3 + i * 1.8) * 3;
+        (g.material as THREE.MeshBasicMaterial).opacity = 0.1 + Math.sin(t * 0.5 + i) * 0.05;
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      if (!mountRef.current) return;
+      const nw = mountRef.current.clientWidth;
+      const nh = mountRef.current.clientHeight;
+      renderer.setSize(nw, nh);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+      if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+      gridGeo.dispose();
+      gridMat.dispose();
+      glows.forEach(g => { g.geometry.dispose(); (g.material as THREE.Material).dispose(); });
+    };
+  }, []);
+
+  return (
+    <div
+      ref={mountRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+      }}
+    />
+  );
+}

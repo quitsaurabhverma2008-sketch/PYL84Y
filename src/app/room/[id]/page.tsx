@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { animate } from 'animejs';
+
+const ChatBackground = dynamic(() => import('@/components/ChatBackground'), { ssr: false });
 
 interface Message {
   id: string;
@@ -55,6 +59,8 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const prevMsgCount = useRef(0);
 
   useEffect(() => {
     const storedRoom = localStorage.getItem('pyl84y_room');
@@ -92,6 +98,20 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   }, [room]);
 
   useEffect(() => {
+    if (messages.length > prevMsgCount.current && messagesRef.current) {
+      const newMsgs = messagesRef.current.querySelectorAll('.message-bubble:not(.animated)');
+      if (newMsgs.length > 0) {
+        animate(newMsgs, {
+          opacity: [0, 1],
+          translateY: [15, 0],
+          scale: [0.95, 1],
+          duration: 350,
+          ease: 'outBack',
+        });
+        newMsgs.forEach(el => el.classList.add('animated'));
+      }
+    }
+    prevMsgCount.current = messages.length;
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
@@ -129,7 +149,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
           roomId: room.id,
           senderId: user.id,
           senderName: user.name,
-          content: '📷 Image',
+          content: 'Image',
           type: 'image',
           imageUrl: url,
         }),
@@ -217,57 +237,93 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
   if (!room || !user) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f0f' }}>
-        <div className="animate-pulse" style={{ color: 'rgba(255,255,255,0.5)' }}>Loading...</div>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)' }}>
+        <div className="animate-pulse" style={{ color: 'rgba(248,250,252,0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <span style={{ fontSize: '14px' }}>Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="chat-container" style={{ background: '#0f0f0f' }}>
+    <div className="chat-container" style={{ background: 'var(--color-background)' }}>
+      <ChatBackground />
+
       {/* Header */}
-      <div style={{ padding: '12px 16px', background: 'rgba(15,15,15,0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 20 }}>
+      <div style={{ padding: '12px 16px', background: 'rgba(15,23,42,0.92)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backdropFilter: 'blur(24px)', position: 'sticky', top: 0, zIndex: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={leaveRoom} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '20px' }}>←</button>
+          <button onClick={leaveRoom} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: 'rgba(248,250,252,0.5)', cursor: 'pointer', fontSize: '18px', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#ef4444'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(248,250,252,0.5)'; }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: '600' }}>PYL84Y</h2>
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-              {room.isPermanent ? '🔒 Permanent' : '⚡ Temporary'} • {room.code}
+            <h2 style={{ fontSize: '16px', fontWeight: '700', fontFamily: "'Nunito', sans-serif" }}>PYL84Y</h2>
+            <p style={{ fontSize: '11px', color: 'rgba(248,250,252,0.35)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+              {room.isPermanent ? 'Permanent' : 'Temporary'} · {room.code}
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => startCall('voice')} style={{ background: 'rgba(34,197,94,0.2)', border: 'none', color: '#22c55e', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', fontSize: '14px' }}>📞</button>
-          <button onClick={() => startCall('video')} style={{ background: 'rgba(59,130,246,0.2)', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', fontSize: '14px' }}>📹</button>
-          <button onClick={() => setShowMenu(!showMenu)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', fontSize: '14px' }}>☰</button>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button onClick={() => startCall('voice')} style={{ background: 'rgba(5,150,105,0.15)', border: '1px solid rgba(5,150,105,0.3)', color: '#059669', cursor: 'pointer', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(5,150,105,0.25)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(5,150,105,0.15)'}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Voice
+          </button>
+          <button onClick={() => startCall('video')} style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: '#2563EB', cursor: 'pointer', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(37,99,235,0.25)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(37,99,235,0.15)'}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video
+          </button>
+          <button onClick={() => setShowMenu(!showMenu)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: 'rgba(248,250,252,0.6)', cursor: 'pointer', padding: '8px 10px', borderRadius: '10px', fontSize: '14px', transition: 'all 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
         </div>
       </div>
 
       {/* Menu Dropdown */}
       {showMenu && (
-        <div style={{ position: 'absolute', top: '56px', right: '16px', background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px', zIndex: 30, minWidth: '200px' }} className="animate-in">
-          <button onClick={() => { setShowCode(true); setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: 'white', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', fontSize: '14px' }} onMouseOver={e => (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.1)'} onMouseOut={e => (e.target as HTMLElement).style.background = 'none'}>
-            📋 Show Room Code
+        <div style={{ position: 'absolute', top: '60px', right: '16px', background: 'var(--color-muted)', border: '1px solid var(--color-card-border)', borderRadius: '14px', padding: '6px', zIndex: 30, minWidth: '200px', backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }} className="animate-scale">
+          <button onClick={() => { setShowCode(true); setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: 'var(--color-foreground)', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.15s' }}
+            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Show Room Code
           </button>
-          <button onClick={() => { downloadChat(); setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: 'white', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', fontSize: '14px' }} onMouseOver={e => (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.1)'} onMouseOut={e => (e.target as HTMLElement).style.background = 'none'}>
-            💾 Download Chat
+          <button onClick={() => { downloadChat(); setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: 'var(--color-foreground)', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.15s' }}
+            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Chat
           </button>
-          <button onClick={() => { setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', fontSize: '14px' }} onMouseOver={e => (e.target as HTMLElement).style.background = 'rgba(239,68,68,0.1)'} onMouseOut={e => (e.target as HTMLElement).style.background = 'none'}>
-            🚪 Leave Room
+          <div style={{ height: '1px', background: 'var(--color-card-border)', margin: '4px 8px' }} />
+          <button onClick={() => { setShowMenu(false); }} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.15s' }}
+            onMouseOver={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.1)')}
+            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Leave Room
           </button>
         </div>
       )}
 
       {/* Room Code Modal */}
       {showCode && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setShowCode(false)}>
-          <div className="card" style={{ width: '100%', maxWidth: '340px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Room Code</h3>
-            <p style={{ fontSize: '32px', fontWeight: '800', letterSpacing: '6px', background: 'linear-gradient(135deg, #667eea, #764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>{room.code}</p>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>
-              {room.isPermanent ? 'Permanent • Valid 7 days' : 'Temporary • Valid 24 hours'}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(8px)' }} onClick={() => setShowCode(false)}>
+          <div className="card animate-glow" style={{ width: '100%', maxWidth: '360px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px', fontFamily: "'Nunito', sans-serif" }}>Room Code</h3>
+            <p style={{ fontSize: '36px', fontWeight: '900', letterSpacing: '8px', fontFamily: "'Nunito', sans-serif", marginBottom: '8px' }} className="text-gradient">{room.code}</p>
+            <p style={{ fontSize: '12px', color: 'rgba(248,250,252,0.35)', marginBottom: '20px' }}>
+              {room.isPermanent ? 'Permanent · Valid 7 days' : 'Temporary · Valid 24 hours'}
             </p>
-            <button className="btn-primary" onClick={() => { navigator.clipboard.writeText(room.code); }}>
+            <button className="btn-primary" onClick={() => { navigator.clipboard.writeText(room.code); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               Copy Code
             </button>
           </div>
@@ -275,28 +331,35 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       {/* Messages */}
-      <div className="messages-area">
+      <div className="messages-area" ref={messagesRef}>
         {messages.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '12px', color: 'rgba(255,255,255,0.3)' }}>
-            <p style={{ fontSize: '40px' }}>💬</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '14px', color: 'rgba(248,250,252,0.25)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
             <p style={{ fontSize: '14px' }}>No messages yet. Say hello!</p>
           </div>
         )}
         {messages.map(msg => (
           <div key={msg.id} className={`message-bubble ${msg.senderId === user.id ? 'message-own' : msg.type === 'system' ? 'message-system' : 'message-other'}`}>
             {msg.senderId !== user.id && msg.type !== 'system' && (
-              <p style={{ fontSize: '11px', fontWeight: '600', color: '#a78bfa', marginBottom: '2px' }}>{msg.senderName}</p>
+              <p style={{ fontSize: '11px', fontWeight: '700', color: '#818cf8', marginBottom: '3px', fontFamily: "'Nunito', sans-serif" }}>{msg.senderName}</p>
             )}
             {msg.type === 'image' && msg.imageUrl ? (
               <div>
-                <img src={msg.imageUrl} alt="Shared" style={{ maxWidth: '100%', borderRadius: '8px', cursor: 'pointer' }} onClick={() => saveImage(msg.imageUrl!)} />
-                <button onClick={() => saveImage(msg.imageUrl!)} style={{ marginTop: '4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}>💾 Save Image</button>
-                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>Saved to server • Admin keeps 3 days</p>
+                <img src={msg.imageUrl} alt="Shared" style={{ maxWidth: '100%', borderRadius: '12px', cursor: 'pointer' }} onClick={() => saveImage(msg.imageUrl!)} />
+                <button onClick={() => saveImage(msg.imageUrl!)} style={{ marginTop: '6px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Save
+                </button>
+                <p style={{ fontSize: '10px', color: 'rgba(248,250,252,0.25)', marginTop: '3px' }}>Stored on server · Admin keeps 3 days</p>
               </div>
             ) : (
               <p>{msg.content}</p>
             )}
-            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '2px', textAlign: 'right' }}>
+            <p style={{ fontSize: '10px', color: 'rgba(248,250,252,0.25)', marginTop: '3px', textAlign: 'right' }}>
               {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
@@ -316,9 +379,15 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '10px', borderRadius: '10px', fontSize: '18px', flexShrink: 0 }}
+          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid var(--color-card-border)', color: 'rgba(248,250,252,0.6)', cursor: 'pointer', padding: '10px', borderRadius: '12px', fontSize: '16px', flexShrink: 0, transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+          onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'var(--color-card-border)'; }}
         >
-          {uploading ? '⏳' : '📷'}
+          {uploading ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.8s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          )}
         </button>
         <input
           className="input-field"
@@ -326,39 +395,42 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && sendMessage()}
-          style={{ borderRadius: '24px', padding: '12px 16px' }}
+          style={{ borderRadius: '24px', padding: '12px 18px' }}
         />
         <button
           onClick={sendMessage}
           disabled={!inputText.trim()}
-          style={{ background: inputText.trim() ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '10px 14px', borderRadius: '10px', fontSize: '18px', flexShrink: 0 }}
+          style={{ background: inputText.trim() ? 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' : 'rgba(255,255,255,0.08)', border: 'none', color: 'white', cursor: 'pointer', padding: '10px 14px', borderRadius: '12px', fontSize: '16px', flexShrink: 0, transition: 'all 0.25s', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: inputText.trim() ? '0 4px 16px rgba(37,99,235,0.3)' : 'none' }}
         >
-          ➤
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
 
       {/* Call Overlay */}
       {showCall && (
         <div className="call-overlay">
-          <div style={{ position: 'relative', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-            <p style={{ fontSize: '18px', fontWeight: '600' }}>{callType === 'video' ? '📹 Video Call' : '📞 Voice Call'}</p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>{callActive ? 'Connected' : 'Connecting...'}</p>
-            
+          <div style={{ position: 'relative', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+            <p style={{ fontSize: '20px', fontWeight: '800', fontFamily: "'Nunito', sans-serif" }} className="text-gradient">{callType === 'video' ? 'Video Call' : 'Voice Call'}</p>
+            <p style={{ color: 'rgba(248,250,252,0.4)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: callActive ? '#22c55e' : '#fbbf24', animation: 'pulse 1.5s ease infinite' }} />
+              {callActive ? 'Connected' : 'Connecting...'}
+            </p>
+
             {callType === 'video' && (
               <>
-                <video ref={remoteVideoRef} autoPlay playsInline style={{ width: '100%', maxWidth: '350px', borderRadius: '16px', background: '#1a1a2e' }} />
-                <video ref={localVideoRef} autoPlay playsInline muted style={{ position: 'absolute', bottom: '100px', right: '16px', width: '100px', borderRadius: '12px', border: '2px solid rgba(255,255,255,0.2)' }} />
+                <video ref={remoteVideoRef} autoPlay playsInline style={{ width: '100%', maxWidth: '350px', borderRadius: '18px', background: 'var(--color-muted)', border: '1px solid var(--color-card-border)' }} />
+                <video ref={localVideoRef} autoPlay playsInline muted style={{ position: 'absolute', bottom: '100px', right: '16px', width: '100px', borderRadius: '14px', border: '2px solid var(--color-primary)', boxShadow: '0 4px 20px rgba(37,99,235,0.3)' }} />
               </>
             )}
 
             {callType === 'voice' && (
-              <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }} className="animate-pulse">
-                📞
+              <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(37,99,235,0.3)' }} className="animate-pulse">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
             )}
 
-            <button onClick={endCall} className="btn-danger" style={{ borderRadius: '50%', width: '64px', height: '64px', padding: 0, fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              📵
+            <button onClick={endCall} className="btn-danger" style={{ borderRadius: '50%', width: '64px', height: '64px', padding: 0, fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(220,38,38,0.3)' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
             </button>
           </div>
         </div>
@@ -366,7 +438,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Expiry Timer */}
       {room.expiresAt && (
-        <div style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.8)', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', zIndex: 10 }}>
+        <div style={{ position: 'fixed', bottom: '84px', left: '50%', transform: 'translateX(-50%)', background: 'var(--color-muted)', border: '1px solid var(--color-card-border)', padding: '6px 16px', borderRadius: '20px', fontSize: '11px', color: 'rgba(248,250,252,0.35)', zIndex: 10, backdropFilter: 'blur(10px)', whiteSpace: 'nowrap' }}>
           Expires {new Date(room.expiresAt).toLocaleString()}
         </div>
       )}

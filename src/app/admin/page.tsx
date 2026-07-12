@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { animate } from 'animejs';
 
 interface UserData {
   id: string;
@@ -48,6 +49,31 @@ interface DashboardData {
   rooms: RoomData[];
 }
 
+function AnimatedNumber({ value, color }: { value: number; color: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const prevVal = useRef(0);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const from = prevVal.current;
+    const to = value;
+    prevVal.current = to;
+    if (from === to) return;
+
+    const obj = { val: from };
+    animate(obj, {
+      val: to,
+      duration: 600,
+      ease: 'outExpo',
+      onUpdate: () => {
+        if (ref.current) ref.current.textContent = Math.round(obj.val).toString();
+      },
+    });
+  }, [value]);
+
+  return <span ref={ref} style={{ fontSize: '32px', fontWeight: '900', color, fontFamily: "'Nunito', sans-serif" }}>{value}</span>;
+}
+
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -59,6 +85,7 @@ export default function AdminPage() {
   const [downloading, setDownloading] = useState(false);
   const [downloadingRoom, setDownloadingRoom] = useState<string | null>(null);
   const [countdown, setCountdown] = useState('');
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,6 +110,18 @@ export default function AdminPage() {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [authenticated]);
+
+  useEffect(() => {
+    if (!authenticated || !contentRef.current) return;
+    const els = contentRef.current.querySelectorAll('[data-admin-animate]');
+    animate(els, {
+      opacity: [0, 1],
+      translateY: [16, 0],
+      delay: (_el, i) => (i ?? 0) * 60,
+      duration: 450,
+      ease: 'outExpo',
+    });
+  }, [authenticated, data]);
 
   useEffect(() => {
     if (!data?.nextCleanup) return;
@@ -135,9 +174,7 @@ export default function AdminPage() {
         roomInfo.push(`Type:          ${room.isPermanent ? 'Permanent (7 days)' : 'Non-Permanent (24 hrs)'}`);
         roomInfo.push(`Room ID:       ${room.id}`);
         roomInfo.push(`Created At:    ${new Date(room.createdAt).toLocaleString()}`);
-        if (room.expiresAt) {
-          roomInfo.push(`Expires At:    ${new Date(room.expiresAt).toLocaleString()}`);
-        }
+        if (room.expiresAt) roomInfo.push(`Expires At:    ${new Date(room.expiresAt).toLocaleString()}`);
         roomInfo.push(`Total Users:   ${room.userDetails.length}`);
         roomInfo.push(`Total Messages: ${room.messages.length}`);
         roomInfo.push('');
@@ -152,7 +189,6 @@ export default function AdminPage() {
           roomInfo.push(`  Joined At:   ${new Date(u.createdAt).toLocaleString()}`);
           roomInfo.push('');
         }
-
         folder.file('room-info.txt', roomInfo.join('\n'));
 
         if (room.messages.length > 0) {
@@ -162,16 +198,9 @@ export default function AdminPage() {
           chatLines.push('');
           for (const msg of room.messages) {
             const time = new Date(msg.createdAt).toLocaleString();
-            if (msg.type === 'image') {
-              chatLines.push(`[${time}] ${msg.senderName}: [IMAGE] ${msg.imageUrl || 'no url'}`);
-            } else {
-              chatLines.push(`[${time}] ${msg.senderName}: ${msg.content}`);
-            }
+            chatLines.push(msg.type === 'image' ? `[${time}] ${msg.senderName}: [IMAGE] ${msg.imageUrl || 'no url'}` : `[${time}] ${msg.senderName}: ${msg.content}`);
           }
           folder.file('chat.txt', chatLines.join('\n'));
-        }
-
-        if (room.messages.length > 0) {
           const jsonFolder = zip.folder(`${folderName}/json`)!;
           jsonFolder.file('room.json', JSON.stringify(room, null, 2));
         }
@@ -195,7 +224,6 @@ export default function AdminPage() {
     try {
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
-
       const folderName = room.isPermanent
         ? `Permanent_${room.code}_${room.userDetails[0]?.name || 'unknown'}`
         : `Temp_${room.code}_${room.userDetails[0]?.name || 'unknown'}`;
@@ -208,9 +236,7 @@ export default function AdminPage() {
       roomInfo.push(`Type:          ${room.isPermanent ? 'Permanent (7 days)' : 'Non-Permanent (24 hrs)'}`);
       roomInfo.push(`Room ID:       ${room.id}`);
       roomInfo.push(`Created At:    ${new Date(room.createdAt).toLocaleString()}`);
-      if (room.expiresAt) {
-        roomInfo.push(`Expires At:    ${new Date(room.expiresAt).toLocaleString()}`);
-      }
+      if (room.expiresAt) roomInfo.push(`Expires At:    ${new Date(room.expiresAt).toLocaleString()}`);
       roomInfo.push(`Total Users:   ${room.userDetails.length}`);
       roomInfo.push(`Total Messages: ${room.messages.length}`);
       roomInfo.push('');
@@ -225,7 +251,6 @@ export default function AdminPage() {
         roomInfo.push(`  Joined At:   ${new Date(u.createdAt).toLocaleString()}`);
         roomInfo.push('');
       }
-
       folder.file('room-info.txt', roomInfo.join('\n'));
       folder.file('room.json', JSON.stringify(room, null, 2));
 
@@ -236,11 +261,7 @@ export default function AdminPage() {
         chatLines.push('');
         for (const msg of room.messages) {
           const time = new Date(msg.createdAt).toLocaleString();
-          if (msg.type === 'image') {
-            chatLines.push(`[${time}] ${msg.senderName}: [IMAGE] ${msg.imageUrl || 'no url'}`);
-          } else {
-            chatLines.push(`[${time}] ${msg.senderName}: ${msg.content}`);
-          }
+          chatLines.push(msg.type === 'image' ? `[${time}] ${msg.senderName}: [IMAGE] ${msg.imageUrl || 'no url'}` : `[${time}] ${msg.senderName}: ${msg.content}`);
         }
         folder.file('chat.txt', chatLines.join('\n'));
       }
@@ -272,14 +293,19 @@ export default function AdminPage() {
 
   if (!authenticated) {
     return (
-      <div style={{ minHeight: '100dvh', background: '#0a0a0f', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ width: '100%', maxWidth: '380px', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>PYL84Y</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginBottom: '32px' }}>Admin Dashboard — Enter Password</p>
+      <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', backdropFilter: 'blur(10px)' }} className="animate-glow">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#lock-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <defs><linearGradient id="lock-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#6366F1"/></linearGradient></defs>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h1 style={{ fontSize: '36px', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px' }} className="text-gradient">PYL84Y</h1>
+          <p style={{ color: 'rgba(248,250,252,0.35)', fontSize: '14px', marginBottom: '36px' }}>Admin Dashboard — Enter Password</p>
 
           {passwordError && (
-            <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px' }}>
+            <div style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', color: '#fca5a5', fontSize: '14px' }} className="animate-scale">
               {passwordError}
             </div>
           )}
@@ -294,11 +320,7 @@ export default function AdminPage() {
             autoFocus
             style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', letterSpacing: '4px' }}
           />
-          <button
-            className="btn-primary"
-            onClick={handlePasswordSubmit}
-            disabled={!passwordInput.trim()}
-          >
+          <button className="btn-primary" onClick={handlePasswordSubmit} disabled={!passwordInput.trim()}>
             Unlock
           </button>
         </div>
@@ -307,93 +329,108 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#0a0a0f', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: "'DM Sans', sans-serif" }}>
       {/* Header */}
-      <div style={{ padding: '16px 24px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(20px)' }}>
+      <div style={{ padding: '16px 24px', background: 'rgba(15,23,42,0.92)', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(24px)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1 style={{ fontSize: '24px', fontWeight: '800', background: 'linear-gradient(135deg, #667eea, #764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>PYL84Y</h1>
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>Admin Dashboard</span>
+            <h1 style={{ fontSize: '24px', fontWeight: '900', fontFamily: "'Nunito', sans-serif", letterSpacing: '-1px' }} className="text-gradient">PYL84Y</h1>
+            <span style={{ color: 'rgba(248,250,252,0.3)', fontSize: '14px' }}>Admin Dashboard</span>
           </div>
           <button
             onClick={downloadAllAsZip}
             disabled={downloading || !data || data.totalRooms === 0}
             style={{
-              background: downloading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
-              color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px',
-              fontSize: '14px', fontWeight: '600', cursor: downloading ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: '8px',
+              background: downloading ? 'var(--color-muted)' : 'linear-gradient(135deg, #059669, #047857)',
+              color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px',
+              fontSize: '14px', fontWeight: '700', cursor: downloading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.25s',
+              boxShadow: !downloading && data && data.totalRooms > 0 ? '0 4px 16px rgba(5,150,105,0.3)' : 'none',
             }}
           >
-            {downloading ? '⏳ Packing...' : '📦 Download All Data (ZIP)'}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            {downloading ? 'Packing...' : 'Download All (ZIP)'}
           </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }} ref={contentRef}>
         {loading && !data ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(255,255,255,0.3)' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }} className="animate-pulse">⏳</div>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(248,250,252,0.3)' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             <p>Loading dashboard data...</p>
           </div>
         ) : (
           <>
-            {/* KV Status */}
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ padding: '10px 16px', borderRadius: '10px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: data?.kvConnected ? 'rgba(34,197,94,0.1)' : 'rgba(251,191,36,0.1)', border: `1px solid ${data?.kvConnected ? 'rgba(34,197,94,0.3)' : 'rgba(251,191,36,0.3)'}` }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: data?.kvConnected ? '#22c55e' : '#fbbf24' }} />
+            {/* Status Bar */}
+            <div data-admin-animate style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: data?.kvConnected ? 'rgba(5,150,105,0.1)' : 'rgba(251,191,36,0.1)', border: `1px solid ${data?.kvConnected ? 'rgba(5,150,105,0.25)' : 'rgba(251,191,36,0.25)'}`, backdropFilter: 'blur(10px)' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: data?.kvConnected ? '#22c55e' : '#fbbf24', boxShadow: `0 0 8px ${data?.kvConnected ? 'rgba(34,197,94,0.5)' : 'rgba(251,191,36,0.5)'}` }} />
                 {data?.kvConnected ? 'Upstash Connected' : 'In-Memory Mode'}
               </div>
-              <div style={{ padding: '10px 16px', borderRadius: '10px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <span style={{ fontSize: '14px' }}>🧹</span>
-                <span>Next cleanup in: <strong style={{ color: '#fca5a5', fontVariantNumeric: 'tabular-nums' }}>{countdown}</strong></span>
+              <div style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', backdropFilter: 'blur(10px)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Next cleanup: <strong style={{ color: '#fca5a5', fontVariantNumeric: 'tabular-nums', fontFamily: "'Nunito', sans-serif" }}>{countdown}</strong></span>
               </div>
               {countdown && data?.nextCleanup && (
-                <div style={{ padding: '10px 16px', borderRadius: '10px', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
-                  All data auto-deletes every 3 days. Download before cleanup!
+                <div style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '12px', color: 'rgba(248,250,252,0.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Download before auto-cleanup!
                 </div>
               )}
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '32px' }}>
               {[
-                { label: 'Total Rooms', value: data?.totalRooms || 0, icon: '🏠', color: '#667eea' },
-                { label: 'Total Users', value: data?.totalUsers || 0, icon: '👥', color: '#764ba2' },
-                { label: 'Total Messages', value: data?.totalMessages || 0, icon: '💬', color: '#f093fb' },
-                { label: 'Permanent Rooms', value: data?.rooms.filter(r => r.isPermanent).length || 0, icon: '🔒', color: '#22c55e' },
+                { label: 'Total Rooms', value: data?.totalRooms || 0, color: '#2563EB', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+                { label: 'Total Users', value: data?.totalUsers || 0, color: '#6366F1', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                { label: 'Total Messages', value: data?.totalMessages || 0, color: '#a78bfa', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+                { label: 'Permanent Rooms', value: data?.rooms.filter(r => r.isPermanent).length || 0, color: '#22c55e', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
               ].map((stat, i) => (
-                <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '20px' }}>{stat.icon}</span>
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{stat.label}</span>
+                <div data-admin-animate key={i} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', padding: '22px', backdropFilter: 'blur(10px)', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'default' }}
+                  onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${stat.color}22`; }}
+                  onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{ color: stat.color, opacity: 0.7 }}>{stat.icon}</div>
+                    <span style={{ fontSize: '13px', color: 'rgba(248,250,252,0.4)', fontWeight: 500 }}>{stat.label}</span>
                   </div>
-                  <p style={{ fontSize: '32px', fontWeight: '800', color: stat.color }}>{stat.value}</p>
+                  <AnimatedNumber value={stat.value} color={stat.color} />
                 </div>
               ))}
             </div>
 
             {/* Search */}
-            <div style={{ marginBottom: '24px' }}>
-              <input
-                className="input-field"
-                placeholder="🔍 Search by room code, name, email, phone, or message..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{ maxWidth: '500px', borderRadius: '12px' }}
-              />
+            <div data-admin-animate style={{ marginBottom: '24px' }}>
+              <div style={{ position: 'relative', maxWidth: '500px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}>
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  className="input-field"
+                  placeholder="Search by room code, name, email, phone, or message..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ borderRadius: '14px', paddingLeft: '40px' }}
+                />
+              </div>
             </div>
 
             {/* Room List */}
             {filteredRooms.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.3)' }}>
-                <p style={{ fontSize: '40px', marginBottom: '12px' }}>📭</p>
+              <div data-admin-animate style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(248,250,252,0.25)' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: 'var(--color-card)', border: '1px solid var(--color-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
                 <p>No rooms found</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {filteredRooms.map(room => (
-                  <div key={room.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden' }}>
+                  <div data-admin-animate key={room.id} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', overflow: 'hidden', backdropFilter: 'blur(10px)', transition: 'border-color 0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(37,99,235,0.3)'}
+                    onMouseOut={e => e.currentTarget.style.borderColor = 'var(--color-card-border)'}>
                     {/* Room Header */}
                     <div
                       style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', flexWrap: 'wrap', gap: '8px' }}
@@ -401,21 +438,22 @@ export default function AdminPage() {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
                         <span style={{
-                          padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700',
-                          background: room.isPermanent ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)',
+                          padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', fontFamily: "'Nunito', sans-serif",
+                          background: room.isPermanent ? 'rgba(5,150,105,0.12)' : 'rgba(251,191,36,0.12)',
                           color: room.isPermanent ? '#22c55e' : '#fbbf24',
+                          border: `1px solid ${room.isPermanent ? 'rgba(5,150,105,0.25)' : 'rgba(251,191,36,0.25)'}`,
                         }}>
-                          {room.isPermanent ? '🔒 PERMANENT' : '⚡ TEMP'}
+                          {room.isPermanent ? 'PERMANENT' : 'TEMP'}
                         </span>
                         <div>
-                          <p style={{ fontWeight: '700', fontSize: '15px' }}>
+                          <p style={{ fontWeight: '700', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                             {room.userDetails[0]?.name || 'Unknown'}
-                            <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: '400', marginLeft: '10px', fontSize: '13px' }}>
-                              Code: <span style={{ color: '#667eea', fontWeight: '600', letterSpacing: '2px' }}>{room.code}</span>
+                            <span style={{ color: 'rgba(248,250,252,0.3)', fontWeight: '400', fontSize: '13px' }}>
+                              Code: <span style={{ color: '#2563EB', fontWeight: '600', letterSpacing: '2px', fontFamily: "'Nunito', sans-serif" }}>{room.code}</span>
                             </span>
                           </p>
-                          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
-                            Created: {new Date(room.createdAt).toLocaleString()} • {room.userDetails.length} user{room.userDetails.length !== 1 ? 's' : ''} • {room.messageCount} message{room.messageCount !== 1 ? 's' : ''}
+                          <p style={{ fontSize: '12px', color: 'rgba(248,250,252,0.3)', marginTop: '2px' }}>
+                            {new Date(room.createdAt).toLocaleString()} · {room.userDetails.length} user{room.userDetails.length !== 1 ? 's' : ''} · {room.messageCount} msg{room.messageCount !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
@@ -424,58 +462,58 @@ export default function AdminPage() {
                           onClick={(e) => { e.stopPropagation(); downloadSingleRoom(room); }}
                           disabled={downloadingRoom === room.id}
                           style={{
-                            background: 'rgba(102,126,234,0.2)', border: '1px solid rgba(102,126,234,0.3)',
-                            color: '#667eea', padding: '6px 14px', borderRadius: '8px', fontSize: '12px',
-                            fontWeight: '600', cursor: 'pointer',
+                            background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)',
+                            color: '#2563EB', padding: '6px 14px', borderRadius: '10px', fontSize: '12px',
+                            fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s',
+                            display: 'flex', alignItems: 'center', gap: '4px',
                           }}
                         >
-                          {downloadingRoom === room.id ? '⏳' : '📥 Folder'}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          {downloadingRoom === room.id ? '...' : 'ZIP'}
                         </button>
-                        <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>
-                          {expandedRoom === room.id ? '▲' : '▼'}
+                        <span style={{ fontSize: '14px', color: 'rgba(248,250,252,0.25)', transition: 'transform 0.2s', display: 'inline-block', transform: expandedRoom === room.id ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
                       </div>
                     </div>
 
                     {/* Expanded Detail */}
                     {expandedRoom === room.id && (
-                      <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }} className="animate-in">
-                        {/* Users */}
+                      <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(255,255,255,0.04)' }} className="animate-in">
                         <div style={{ marginTop: '16px' }}>
-                          <h4 style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', fontWeight: '600' }}>USERS IN THIS ROOM</h4>
+                          <h4 style={{ fontSize: '12px', color: 'rgba(248,250,252,0.3)', marginBottom: '10px', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' }}>Users</h4>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {room.userDetails.map(u => (
-                              <div key={u.id} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                              <div key={u.id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
                                 <div>
                                   <p style={{ fontWeight: '600', fontSize: '14px' }}>{u.name}</p>
-                                  {u.email && <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>📧 {u.email}</p>}
-                                  {u.phone && <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>📱 {u.phone}</p>}
+                                  {u.email && <p style={{ fontSize: '12px', color: 'rgba(248,250,252,0.35)', marginTop: '2px' }}>{u.email}</p>}
+                                  {u.phone && <p style={{ fontSize: '12px', color: 'rgba(248,250,252,0.35)', marginTop: '2px' }}>{u.phone}</p>}
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>Joined: {new Date(u.createdAt).toLocaleTimeString()}</p>
-                                  {u.permanentCode && <p style={{ fontSize: '11px', color: '#667eea' }}>Code: {u.permanentCode}</p>}
+                                  <p style={{ fontSize: '11px', color: 'rgba(248,250,252,0.25)' }}>Joined: {new Date(u.createdAt).toLocaleTimeString()}</p>
+                                  {u.permanentCode && <p style={{ fontSize: '11px', color: '#2563EB', fontWeight: '600' }}>Code: {u.permanentCode}</p>}
                                 </div>
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        {/* Messages */}
                         {room.messages.length > 0 && (
                           <div style={{ marginTop: '16px' }}>
-                            <h4 style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', fontWeight: '600' }}>CHAT HISTORY ({room.messages.length})</h4>
-                            <div style={{ maxHeight: '300px', overflowY: 'auto', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', padding: '12px' }}>
+                            <h4 style={{ fontSize: '12px', color: 'rgba(248,250,252,0.3)', marginBottom: '10px', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' }}>Chat History ({room.messages.length})</h4>
+                            <div style={{ maxHeight: '300px', overflowY: 'auto', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
                               {room.messages.map(msg => (
-                                <div key={msg.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <div key={msg.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                                   <p style={{ fontSize: '12px' }}>
-                                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>[{new Date(msg.createdAt).toLocaleTimeString()}]</span>
+                                    <span style={{ color: 'rgba(248,250,252,0.25)' }}>[{new Date(msg.createdAt).toLocaleTimeString()}]</span>
                                     {' '}
-                                    <span style={{ color: '#a78bfa', fontWeight: '600' }}>{msg.senderName}:</span>
+                                    <span style={{ color: '#818cf8', fontWeight: '600' }}>{msg.senderName}:</span>
                                     {' '}
                                     {msg.type === 'image' ? (
-                                      <span style={{ color: '#fbbf24' }}>📷 Image {msg.imageUrl && <a href={msg.imageUrl} target="_blank" rel="noopener" style={{ color: '#667eea', textDecoration: 'underline' }}>view</a>}</span>
+                                      <span style={{ color: '#fbbf24' }}>Image {msg.imageUrl && <a href={msg.imageUrl} target="_blank" rel="noopener" style={{ color: '#2563EB', textDecoration: 'underline' }}>view</a>}</span>
                                     ) : (
-                                      <span style={{ color: 'rgba(255,255,255,0.8)' }}>{msg.content}</span>
+                                      <span style={{ color: 'rgba(248,250,252,0.7)' }}>{msg.content}</span>
                                     )}
                                   </p>
                                 </div>
@@ -494,8 +532,8 @@ export default function AdminPage() {
       </div>
 
       {/* Footer */}
-      <div style={{ textAlign: 'center', padding: '24px', color: 'rgba(255,255,255,0.2)', fontSize: '12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        PYL84Y Admin Dashboard • Data refreshes every 5 seconds
+      <div style={{ textAlign: 'center', padding: '24px', color: 'rgba(248,250,252,0.15)', fontSize: '12px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        PYL84Y Admin Dashboard · Data refreshes every 5 seconds
       </div>
     </div>
   );
