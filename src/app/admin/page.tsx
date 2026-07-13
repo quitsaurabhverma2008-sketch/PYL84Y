@@ -141,7 +141,7 @@ export default function AdminPage() {
       duration: 450,
       ease: 'outExpo',
     });
-  }, [authenticated, data]);
+  }, [authenticated]);
 
   useEffect(() => {
     if (!data?.nextCleanup) return;

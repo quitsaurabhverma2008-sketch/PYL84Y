@@ -63,7 +63,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   const messagesRef = useRef<HTMLDivElement>(null);
   const prevMsgCount = useRef(0);
 
-  const [callState, setCallState] = useState<'idle' | 'outgoing' | 'incoming' | 'active' | 'ended'>('idle');
+  const [callState, setCallState] = useState<'idle' | 'outgoing' | 'incoming' | 'answering' | 'active' | 'ended'>('idle');
   const [callType, setCallType] = useState<'video' | 'voice'>('voice');
   const [incomingCallData, setIncomingCallData] = useState<any>(null);
   const [callDuration, setCallDuration] = useState(0);
@@ -163,33 +163,57 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
     if (!room || !user) return;
     const poll = async () => {
       const cs = callStateRef.current;
-      if (cs === 'active') return;
+      if (cs === 'idle') return;
       try {
         const res = await fetch(`/api/calls?roomId=${room.id}&userId=${user.id}`);
         const data = await res.json();
-        if (data.status === 'ringing' && data.callerId !== user.id && cs !== 'incoming') {
+
+        if (data.status === 'ringing' && data.callerId !== user.id && cs !== 'incoming' && cs !== 'answering') {
           setIncomingCallData(data);
           setCallType(data.callType);
           setCallState('incoming');
         }
-        if (data.status === 'answered' && cs === 'outgoing' && data.answer) {
-          if (pcRef.current) {
-            await pcRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+
+        if (data.status === 'answered' && cs === 'outgoing' && data.answer && pcRef.current) {
+          const pc = pcRef.current;
+          if (pc.signalingState === 'have-local-offer') {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+          }
+          if (data.iceCandidates) {
+            for (const ice of data.iceCandidates) {
+              try { await pc.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch {}
+            }
+          }
+          if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
             setCallState('active');
             startCallTimer();
           }
         }
-        if (data.status === 'declined' && cs === 'outgoing') {
+
+        if (data.status === 'answered' && (cs === 'answering' || cs === 'active') && pcRef.current && data.iceCandidates) {
+          for (const ice of data.iceCandidates) {
+            try { await pcRef.current.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch {}
+          }
+          if (cs === 'answering' && (pcRef.current.iceConnectionState === 'connected' || pcRef.current.iceConnectionState === 'completed')) {
+            setCallState('active');
+          }
+        }
+
+        if (data.status === 'declined' && (cs === 'outgoing' || cs === 'answering')) {
           cleanupCall();
           setCallState('idle');
         }
-        if (data.status === 'ended' && (cs === 'active' || cs === 'outgoing')) {
+        if (data.status === 'ended' && (cs === 'active' || cs === 'outgoing' || cs === 'answering')) {
+          cleanupCall();
+          setCallState('idle');
+        }
+        if (data.status === 'idle' && (cs === 'outgoing' || cs === 'answering')) {
           cleanupCall();
           setCallState('idle');
         }
       } catch (e) {}
     };
-    pollRef.current = setInterval(poll, 2000);
+    pollRef.current = setInterval(poll, 1500);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [room, user, cleanupCall, startCallTimer]);
 
@@ -216,10 +240,14 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       pc.onicecandidate = async (e) => {
         if (e.candidate) {
           await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: e.candidate ? { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment } : null, senderId: user.id }) });
+            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment }, senderId: user.id }) });
         }
       };
       pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          setCallState('active');
+          startCallTimer();
+        }
         if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') endCall();
       };
       const offer = await pc.createOffer();
@@ -235,7 +263,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
   const acceptCall = async () => {
     if (!room || !user || !incomingCallData) return;
-    setCallState('active');
+    setCallState('answering');
     try {
       const type = incomingCallData.callType;
       const stream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
@@ -252,10 +280,14 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       pc.onicecandidate = async (e) => {
         if (e.candidate) {
           await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: e.candidate ? { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment } : null, senderId: user.id }) });
+            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment }, senderId: user.id }) });
         }
       };
       pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          setCallState('active');
+          startCallTimer();
+        }
         if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') endCall();
       };
       if (incomingCallData.offer) {
@@ -272,7 +304,6 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       await pc.setLocalDescription(answer);
       await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'answer', roomId: room.id, answer: { type: answer.type, sdp: answer.sdp }, receiverId: user.id }) });
-      startCallTimer();
     } catch (e) {
       console.error('Failed to accept call:', e);
       declineCall();
@@ -353,7 +384,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  const isInCall = callState === 'outgoing' || callState === 'incoming' || callState === 'active';
+  const isInCall = callState === 'outgoing' || callState === 'incoming' || callState === 'active' || callState === 'answering';
 
   return (
     <div className="chat-container" style={{ background: 'var(--color-background)' }}>

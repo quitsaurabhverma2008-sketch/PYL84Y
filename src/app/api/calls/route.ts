@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
 
   const isCaller = state.callerId === userId;
   const isReceiver = state.receiverId === userId;
+  const iceCandidates = (state.iceCandidates || []).filter((c: any) => c.senderId !== userId);
 
   if (state.status === 'ringing' && isReceiver) {
     return NextResponse.json({
@@ -53,19 +54,20 @@ export async function GET(req: NextRequest) {
       callerName: state.callerName,
       callerId: state.callerId,
       offer: state.offer,
+      iceCandidates,
     });
   }
 
   if (state.status === 'ringing' && isCaller) {
-    return NextResponse.json({ status: 'ringing', callType: state.callType });
+    return NextResponse.json({ status: 'ringing', callType: state.callType, iceCandidates });
   }
 
   if (state.status === 'answered') {
     if (isCaller && state.answer) {
-      return NextResponse.json({ status: 'answered', answer: state.answer, callType: state.callType });
+      return NextResponse.json({ status: 'answered', answer: state.answer, callType: state.callType, iceCandidates });
     }
     if (isReceiver) {
-      return NextResponse.json({ status: 'answered', callType: state.callType });
+      return NextResponse.json({ status: 'answered', callType: state.callType, iceCandidates });
     }
   }
 
