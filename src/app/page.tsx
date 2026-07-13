@@ -4,18 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { animate } from 'animejs';
 import { applyTheme, getComboById } from '@/lib/themes';
+import ThemePicker from '@/components/ThemePicker';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'home' | 'nonperm-create' | 'nonperm-join' | 'perm-create' | 'perm-create-form' | 'perm-join' | 'perm-warning'>('home');
+  const [mode, setMode] = useState<'home' | 'nonperm-create' | 'nonperm-join' | 'perm-create-form' | 'perm-join' | 'perm-warning'>('home');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [roomCode, setRoomCode] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const { setShowThemePicker } = useTheme();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('pyl84y_user');
@@ -103,8 +105,7 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error);
       localStorage.setItem('pyl84y_user', JSON.stringify(data.user));
       localStorage.setItem('pyl84y_room', JSON.stringify(data.room));
-      setRoomCode(data.permanentCode);
-      setMode('perm-create');
+      router.push('/social');
     } catch (e: any) {
       setError(e.message || 'Failed to create permanent room');
     } finally {
@@ -127,7 +128,7 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error);
       localStorage.setItem('pyl84y_user', JSON.stringify(data.user));
       localStorage.setItem('pyl84y_room', JSON.stringify(data.room));
-      router.push(`/room/${data.room.id}`);
+      router.push('/social');
     } catch (e: any) {
       setError(e.message || 'Failed to join permanent room');
     } finally {
@@ -256,27 +257,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* PERMANENT CREATED - SHOW CODE */}
-        {mode === 'perm-create' && roomCode && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div data-animate className="card animate-glow" style={{ textAlign: 'center' }}>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}>Your Permanent Code</p>
-              <p style={{ fontSize: '40px', fontWeight: '900', letterSpacing: '8px', fontFamily: "var(--font-heading)" }} className="text-gradient">{roomCode}</p>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginTop: '10px' }}>Valid for 7 days. Share this code with others.</p>
-            </div>
-            <button data-animate className="btn-primary" onClick={() => {
-              const room = JSON.parse(localStorage.getItem('pyl84y_room') || '{}');
-              if (room.id) router.push(`/room/${room.id}`);
-            }}>
-              Enter Chat Room
-            </button>
-            <button data-animate className="btn-secondary" onClick={() => { navigator.clipboard.writeText(roomCode); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy Code
-            </button>
-          </div>
-        )}
-
         {/* Bottom buttons for join - shown on home */}
         {mode === 'home' && (
           <div style={{ width: '100%', marginTop: '28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -285,9 +265,9 @@ export default function LoginPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
               Join with 4-Digit Code
             </button>
-            <button data-animate onClick={() => setMode('perm-join')} className="btn-secondary" style={{ fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              Join with Permanent Code
+            <button data-animate onClick={() => setShowThemePicker(true)} className="btn-secondary" style={{ fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, var(--color-primary-10), transparent, var(--color-accent-10))', border: '1px solid var(--color-primary-25)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="8" cy="18" r="2.5"/><circle cx="16" cy="18" r="2.5"/></svg>
+              Color Theme
             </button>
           </div>
         )}
@@ -321,6 +301,8 @@ export default function LoginPage() {
           Admin
         </a>
       </div>
+
+      <ThemePicker />
     </div>
   );
 }

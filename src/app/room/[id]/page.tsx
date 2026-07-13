@@ -128,9 +128,9 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         });
         newMsgs.forEach(el => el.classList.add('animated'));
       }
+      scrollToBottom();
     }
     prevMsgCount.current = messages.length;
-    scrollToBottom();
   }, [messages, scrollToBottom]);
 
   const cleanupCall = useCallback(() => {

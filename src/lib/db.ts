@@ -248,3 +248,85 @@ export async function getAllUserPreferences(): Promise<Record<string, any>> {
 }
 
 export const hasKV = hasStorage;
+
+// === Social Operations ===
+
+export async function updateUserProfile(userId: string, bio: string): Promise<void> {
+  if (redis) {
+    const users = await getHash('users');
+    if (users[userId]) {
+      users[userId].bio = bio;
+      await saveHash('users', users);
+    }
+  } else {
+    const user = memUsers.get(userId);
+    if (user) user.bio = bio;
+  }
+}
+
+export async function getAllPermanentUsers(): Promise<any[]> {
+  const all = await getAllUsers();
+  return all.filter((u: any) => u.isPermanent && u.permanentExpiry && u.permanentExpiry > Date.now());
+}
+
+export async function searchUsers(query: string): Promise<any[]> {
+  const users = await getAllPermanentUsers();
+  const q = query.toLowerCase().trim();
+  if (!q) return users;
+  return users.filter((u: any) =>
+    u.name?.toLowerCase().includes(q) ||
+    u.permanentCode?.toLowerCase().includes(q) ||
+    u.email?.toLowerCase().includes(q)
+  );
+}
+
+export async function getUserSocial(userId: string): Promise<{ bio: string; followers: string[]; following: string[]; blocked: string[] }> {
+  if (redis) {
+    const all = await getHash('userSocial');
+    return all[userId] || { bio: '', followers: [], following: [], blocked: [] };
+  }
+  return { bio: '', followers: [], following: [], blocked: [] };
+}
+
+export async function setUserSocial(userId: string, social: { bio: string; followers: string[]; following: string[]; blocked: string[] }): Promise<void> {
+  if (redis) {
+    const all = await getHash('userSocial');
+    all[userId] = social;
+    await saveHash('userSocial', all);
+  }
+}
+
+export async function followUser(userId: string, targetId: string): Promise<void> {
+  const userSocial = await getUserSocial(userId);
+  const targetSocial = await getUserSocial(targetId);
+  if (!userSocial.following.includes(targetId)) userSocial.following.push(targetId);
+  if (!targetSocial.followers.includes(userId)) targetSocial.followers.push(userId);
+  await setUserSocial(userId, userSocial);
+  await setUserSocial(targetId, targetSocial);
+}
+
+export async function unfollowUser(userId: string, targetId: string): Promise<void> {
+  const userSocial = await getUserSocial(userId);
+  const targetSocial = await getUserSocial(targetId);
+  userSocial.following = userSocial.following.filter((id: string) => id !== targetId);
+  targetSocial.followers = targetSocial.followers.filter((id: string) => id !== userId);
+  await setUserSocial(userId, userSocial);
+  await setUserSocial(targetId, targetSocial);
+}
+
+export async function blockUser(userId: string, targetId: string): Promise<void> {
+  const userSocial = await getUserSocial(userId);
+  if (!userSocial.blocked.includes(targetId)) userSocial.blocked.push(targetId);
+  await setUserSocial(userId, userSocial);
+}
+
+export async function unblockUser(userId: string, targetId: string): Promise<void> {
+  const userSocial = await getUserSocial(userId);
+  userSocial.blocked = userSocial.blocked.filter((id: string) => id !== targetId);
+  await setUserSocial(userId, userSocial);
+}
+
+export async function getUserRooms(userId: string): Promise<any[]> {
+  const allRooms = await getAllRooms();
+  return allRooms.filter((r: any) => r.isPermanent && r.participants.includes(userId));
+}
