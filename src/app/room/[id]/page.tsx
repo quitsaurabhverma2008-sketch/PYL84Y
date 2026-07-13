@@ -340,6 +340,10 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         body: JSON.stringify({ action: 'answer', roomId: room.id, answer: { type: answer.type, sdp: answer.sdp }, receiverId: user.id }) });
     } catch (e) {
       console.error('Failed to accept call:', e);
+      if (room) {
+        await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'decline', roomId: room.id }) }).catch(() => {});
+      }
       cleanupCall();
       setCallState('idle');
     }
