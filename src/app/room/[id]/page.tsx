@@ -77,6 +77,8 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const addedIceIdsRef = useRef<Set<string>>(new Set());
+  const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => { callStateRef.current = callState; }, [callState]);
 
@@ -144,6 +146,8 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
     }
     remoteStreamRef.current = null;
     if (callTimerRef.current) { clearInterval(callTimerRef.current); callTimerRef.current = null; }
+    if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
+    addedIceIdsRef.current.clear();
     setCallDuration(0);
     setIncomingCallData(null);
   }, []);
@@ -183,7 +187,11 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
           }
           if (data.iceCandidates) {
             for (const ice of data.iceCandidates) {
-              try { await pc.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch {}
+              const iceId = `${ice.candidate?.sdpMid || ''}-${ice.candidate?.sdpMLineIndex || ''}-${ice.candidate?.usernameFragment || ''}`;
+              if (!addedIceIdsRef.current.has(iceId)) {
+                addedIceIdsRef.current.add(iceId);
+                try { await pc.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch {}
+              }
             }
           }
           if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
@@ -194,7 +202,11 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
         if (data.status === 'answered' && (cs === 'answering' || cs === 'active') && pcRef.current && data.iceCandidates) {
           for (const ice of data.iceCandidates) {
-            try { await pcRef.current.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch {}
+            const iceId = `${ice.candidate?.sdpMid || ''}-${ice.candidate?.sdpMLineIndex || ''}-${ice.candidate?.usernameFragment || ''}`;
+            if (!addedIceIdsRef.current.has(iceId)) {
+              addedIceIdsRef.current.add(iceId);
+              try { await pcRef.current.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch {}
+            }
           }
           if (cs === 'answering' && (pcRef.current.iceConnectionState === 'connected' || pcRef.current.iceConnectionState === 'completed')) {
             setCallState('active');
@@ -222,10 +234,19 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => () => { cleanupCall(); }, [cleanupCall]);
 
+  useEffect(() => {
+    if (callState === 'answering' || callState === 'active' || callState === 'outgoing') {
+      if (localVideoRef.current && localStreamRef.current) localVideoRef.current.srcObject = localStreamRef.current;
+      if (remoteVideoRef.current && remoteStreamRef.current) remoteVideoRef.current.srcObject = remoteStreamRef.current;
+      if (remoteAudioRef.current && remoteStreamRef.current) remoteAudioRef.current.srcObject = remoteStreamRef.current;
+    }
+  }, [callState]);
+
   const initiateCall = async (type: 'video' | 'voice') => {
     if (!room || !user) return;
     const receiverId = room.participants.find(p => p !== user.id);
     if (!receiverId) { alert('No other user in the room to call!'); return; }
+    addedIceIdsRef.current.clear();
     setCallType(type);
     setCallState('outgoing');
     try {
@@ -247,16 +268,19 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         }
       };
       pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        const state = pc.iceConnectionState;
+        if (state === 'connected' || state === 'completed') {
+          if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
           setCallState('active');
           startCallTimer();
         }
-        if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') endCall();
+        if (state === 'failed') endCall();
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'initiate', roomId: room.id, callerId: user.id, callerName: user.name, receiverId, callType: type, offer: { type: offer.type, sdp: offer.sdp } }) });
+      callTimeoutRef.current = setTimeout(() => { if (callStateRef.current === 'outgoing') endCall(); }, 30000);
     } catch (e) {
       console.error('Failed to initiate call:', e);
       cleanupCall();
@@ -266,6 +290,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
   const acceptCall = async () => {
     if (!room || !user || !incomingCallData) return;
+    addedIceIdsRef.current.clear();
     setCallState('answering');
     try {
       const type = incomingCallData.callType;
@@ -287,11 +312,13 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         }
       };
       pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        const state = pc.iceConnectionState;
+        if (state === 'connected' || state === 'completed') {
+          if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
           setCallState('active');
           startCallTimer();
         }
-        if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') endCall();
+        if (state === 'failed') endCall();
       };
       if (incomingCallData.offer) {
         await pc.setRemoteDescription(new RTCSessionDescription(incomingCallData.offer));
@@ -299,7 +326,11 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       if (incomingCallData.iceCandidates) {
         for (const ice of incomingCallData.iceCandidates) {
           if (ice.senderId !== user.id) {
-            try { await pc.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch (e) {}
+            const iceId = `${ice.candidate?.sdpMid || ''}-${ice.candidate?.sdpMLineIndex || ''}-${ice.candidate?.usernameFragment || ''}`;
+            if (!addedIceIdsRef.current.has(iceId)) {
+              addedIceIdsRef.current.add(iceId);
+              try { await pc.addIceCandidate(new RTCIceCandidate(ice.candidate)); } catch (e) {}
+            }
           }
         }
       }
@@ -309,7 +340,8 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         body: JSON.stringify({ action: 'answer', roomId: room.id, answer: { type: answer.type, sdp: answer.sdp }, receiverId: user.id }) });
     } catch (e) {
       console.error('Failed to accept call:', e);
-      declineCall();
+      cleanupCall();
+      setCallState('idle');
     }
   };
 
@@ -434,6 +466,32 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
             </button>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '12px' }}>Tap to {callType === 'video' ? 'accept video' : 'answer'}</p>
+        </div>
+      )}
+
+      {/* ANSWERING CALL OVERLAY */}
+      {callState === 'answering' && (
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--color-overlay)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', backdropFilter: 'blur(20px)' }} className="animate-in">
+          {callType === 'video' && (
+            <>
+              <video ref={remoteVideoRef} autoPlay playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0, opacity: 0.3 }} />
+              <video ref={localVideoRef} autoPlay playsInline muted style={{ position: 'absolute', bottom: '140px', right: '20px', width: '120px', height: '160px', borderRadius: '14px', border: '2px solid rgba(255,255,255,0.3)', objectFit: 'cover', zIndex: 2 }} />
+            </>
+          )}
+          {callType === 'voice' && (
+            <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-accent), #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 60px rgba(34,197,94,0.4)' }} className="animate-pulse">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+          )}
+          <div style={{ textAlign: 'center', zIndex: 2 }}>
+            <p style={{ fontSize: '20px', fontWeight: '700', fontFamily: 'var(--font-heading)' }}>Connecting...</p>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '4px' }}>Setting up {callType === 'video' ? 'video' : 'voice'} call</p>
+          </div>
+          <button onClick={endCall} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-danger), #b91c1c)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px var(--color-danger-30)', zIndex: 2, transition: 'transform 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
+          </button>
         </div>
       )}
 
