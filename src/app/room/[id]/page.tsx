@@ -85,6 +85,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   const [chatBg, setChatBg] = useState<string | null>(null);
   const { setCombo, setShowThemePicker, setShowChatBgPicker, isPermanent, combo: themeCombo } = useTheme();
   const [showRoomSettings, setShowRoomSettings] = useState(false);
+  const [callError, setCallError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedRoom = localStorage.getItem('pyl84y_room');
@@ -261,13 +262,18 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   const initiateCall = async (type: 'video' | 'voice') => {
     if (!room || !user) return;
     const receiverId = room.participants.find(p => p !== user.id);
-    if (!receiverId) { alert('No other user in the room to call!'); return; }
+    if (!receiverId) {
+      setCallError('No other user in the room to call!');
+      setTimeout(() => setCallError(null), 3000);
+      return;
+    }
     addedIceIdsRef.current.clear();
-    setCallType(type);
-    setCallState('outgoing');
+    setCallError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
       localStreamRef.current = stream;
+      setCallType(type);
+      setCallState('outgoing');
       if (localVideoRef.current && type === 'video') localVideoRef.current.srcObject = stream;
       const pc = new RTCPeerConnection(ICE_SERVERS);
       pcRef.current = pc;
@@ -311,8 +317,13 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         } catch {}
       }
       callTimeoutRef.current = setTimeout(() => { if (callStateRef.current === 'outgoing') endCall(); }, 30000);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to initiate call:', e);
+      const msg = e?.name === 'NotAllowedError' ? 'Microphone permission denied. Please allow mic access.' :
+                  e?.name === 'NotFoundError' ? 'No microphone found on this device.' :
+                  'Failed to start call. Please try again.';
+      setCallError(msg);
+      setTimeout(() => setCallError(null), 4000);
       cleanupCall();
       setCallState('idle');
     }
@@ -321,11 +332,11 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   const acceptCall = async () => {
     if (!room || !user || !incomingCallData) return;
     addedIceIdsRef.current.clear();
-    setCallState('answering');
     try {
       const type = incomingCallData.callType;
       const stream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
       localStreamRef.current = stream;
+      setCallState('answering');
       if (localVideoRef.current && type === 'video') localVideoRef.current.srcObject = stream;
       const pc = new RTCPeerConnection(ICE_SERVERS);
       pcRef.current = pc;
@@ -382,8 +393,13 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
             body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex, usernameFragment: c.usernameFragment }, senderId: user.id }) });
         } catch {}
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to accept call:', e);
+      const msg = e?.name === 'NotAllowedError' ? 'Microphone permission denied.' :
+                  e?.name === 'NotFoundError' ? 'No microphone found.' :
+                  'Failed to accept call.';
+      setCallError(msg);
+      setTimeout(() => setCallError(null), 4000);
       if (room) {
         await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'decline', roomId: room.id }) }).catch(() => {});
@@ -482,6 +498,13 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       <div className="gradient-blob gradient-blob-1" style={{ opacity: 0.15, filter: 'blur(120px)' }} />
       <div className="gradient-blob gradient-blob-2" style={{ opacity: 0.12, filter: 'blur(120px)' }} />
       <audio ref={remoteAudioRef} autoPlay />
+
+      {/* CALL ERROR TOAST */}
+      {callError && (
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: 'var(--color-danger)', color: 'white', padding: '12px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', zIndex: 999, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+          {callError}
+        </div>
+      )}
 
       {/* INCOMING CALL OVERLAY */}
       {callState === 'incoming' && incomingCallData && (
