@@ -163,16 +163,18 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
     if (!room || !user) return;
     const poll = async () => {
       const cs = callStateRef.current;
-      if (cs === 'idle') return;
       try {
         const res = await fetch(`/api/calls?roomId=${room.id}&userId=${user.id}`);
         const data = await res.json();
 
-        if (data.status === 'ringing' && data.callerId !== user.id && cs !== 'incoming' && cs !== 'answering') {
+        if (data.status === 'ringing' && data.callerId && data.callerId !== user.id && cs !== 'incoming' && cs !== 'answering') {
           setIncomingCallData(data);
           setCallType(data.callType);
           setCallState('incoming');
+          return;
         }
+
+        if (cs === 'idle') return;
 
         if (data.status === 'answered' && cs === 'outgoing' && data.answer && pcRef.current) {
           const pc = pcRef.current;
@@ -196,6 +198,7 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
           }
           if (cs === 'answering' && (pcRef.current.iceConnectionState === 'connected' || pcRef.current.iceConnectionState === 'completed')) {
             setCallState('active');
+            startCallTimer();
           }
         }
 
@@ -203,11 +206,11 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
           cleanupCall();
           setCallState('idle');
         }
-        if (data.status === 'ended' && (cs === 'active' || cs === 'outgoing' || cs === 'answering')) {
+        if (data.status === 'ended' && (cs === 'active' || cs === 'outgoing' || cs === 'answering' || cs === 'incoming')) {
           cleanupCall();
           setCallState('idle');
         }
-        if (data.status === 'idle' && (cs === 'outgoing' || cs === 'answering')) {
+        if (data.status === 'idle' && (cs === 'outgoing' || cs === 'answering' || cs === 'incoming')) {
           cleanupCall();
           setCallState('idle');
         }
