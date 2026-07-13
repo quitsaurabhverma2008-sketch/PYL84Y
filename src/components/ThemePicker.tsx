@@ -4,7 +4,7 @@ import { COLOR_COMBOS } from '@/lib/themes';
 import { useTheme } from './ThemeProvider';
 
 export default function ThemePicker() {
-  const { combo, setCombo, showThemePicker, setShowThemePicker, isPermanent } = useTheme();
+  const { combo, setCombo, showThemePicker, setShowThemePicker } = useTheme();
 
   if (!showThemePicker) return null;
 
@@ -23,7 +23,7 @@ export default function ThemePicker() {
           <div>
             <h3 style={{ fontSize: '18px', fontWeight: '800', fontFamily: "var(--font-heading)", color: 'var(--color-foreground)' }}>Color Themes</h3>
             <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-              {isPermanent ? `${COLOR_COMBOS.length} combos — tap to apply` : 'Permanent users only'}
+              {`${COLOR_COMBOS.length} combos — tap to apply`}
             </p>
           </div>
           <button onClick={() => setShowThemePicker(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: 'var(--color-text-muted)', width: '32px', height: '32px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -44,13 +44,6 @@ export default function ThemePicker() {
 
         {/* Grid */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 20px' }}>
-          {!isPermanent ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-muted)' }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.3 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <p style={{ fontSize: '15px', fontWeight: '600', marginBottom: '6px' }}>Locked</p>
-              <p style={{ fontSize: '13px' }}>Create a permanent room to unlock all {COLOR_COMBOS.length} color combos.</p>
-            </div>
-          ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
               {COLOR_COMBOS.map(c => {
                 const isActive = c.id === combo.id;
@@ -81,7 +74,6 @@ export default function ThemePicker() {
                 );
               })}
             </div>
-          )}
         </div>
       </div>
     </div>

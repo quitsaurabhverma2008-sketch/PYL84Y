@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { setRoom, addUser } from '@/lib/db';
+import { setRoom, addUser, findUserByEmail } from '@/lib/db';
 
 function generatePermanentCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -18,6 +18,11 @@ export async function POST(request: NextRequest) {
 
     if (!name || !email || !phone) {
       return NextResponse.json({ error: 'Name, email, and phone are required' }, { status: 400 });
+    }
+
+    const existingUser = await findUserByEmail(email.trim());
+    if (existingUser && existingUser.permanentExpiry && existingUser.permanentExpiry > Date.now()) {
+      return NextResponse.json({ error: 'This Gmail is already in use. Please login instead.' }, { status: 409 });
     }
 
     const userId = uuidv4();

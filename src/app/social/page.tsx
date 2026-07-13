@@ -33,7 +33,7 @@ interface SocialData {
 export default function SocialPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'search' | 'following' | 'chat' | 'profile'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'following' | 'followers' | 'chat' | 'profile'>('search');
   const [socialData, setSocialData] = useState<SocialData>({ bio: '', followers: [], following: [], blocked: [], rooms: [] });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
@@ -112,6 +112,7 @@ export default function SocialPage() {
   const tabs = [
     { id: 'search' as const, label: 'Search', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
     { id: 'following' as const, label: 'Following', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+    { id: 'followers' as const, label: 'Followers', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> },
     { id: 'chat' as const, label: 'Chat', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
     { id: 'profile' as const, label: 'Profile', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
   ];
@@ -229,32 +230,45 @@ export default function SocialPage() {
               </div>
             ))}
 
-            {socialData.followers.length > 0 && (
-              <>
-                <h2 style={{ fontSize: '20px', fontWeight: '800', fontFamily: 'var(--font-heading)', marginTop: '24px', marginBottom: '16px' }}>Followers ({socialData.followers.length})</h2>
-                {socialData.followers.map(u => (
-                  <div key={u.id} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', backdropFilter: 'blur(10px)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--color-secondary), var(--color-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '800', color: 'white', flexShrink: 0 }}>
-                          {u.name?.charAt(0)?.toUpperCase()}
-                        </div>
-                        <div>
-                          <p style={{ fontSize: '15px', fontWeight: '700' }}>{u.name}</p>
-                          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-heading)' }}>{u.permanentCode}</p>
-                        </div>
-                      </div>
-                      {!socialData.following.some((f: any) => f.id === u.id) && (
-                        <button onClick={() => socialAction('follow', u.id)}
-                          style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>
-                          Follow Back
-                        </button>
-                      )}
+          </div>
+        )}
+
+        {/* FOLLOWERS TAB */}
+        {activeTab === 'followers' && (
+          <div style={{ padding: '16px 20px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '800', fontFamily: 'var(--font-heading)', marginBottom: '16px' }}>Followers ({socialData.followers.length})</h2>
+            {socialData.followers.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-muted)' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 12px', opacity: 0.3 }}><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+                <p style={{ fontSize: '14px', marginBottom: '6px' }}>No followers yet</p>
+                <p style={{ fontSize: '12px' }}>People who follow you will appear here</p>
+              </div>
+            )}
+            {socialData.followers.map(u => (
+              <div key={u.id} style={{ background: 'var(--color-card)', border: '1px solid var(--color-card-border)', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', backdropFilter: 'blur(10px)', cursor: 'pointer' }}
+                onClick={() => setViewingProfile(u)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--color-secondary), var(--color-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '800', color: 'white', flexShrink: 0 }}>
+                      {u.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '15px', fontWeight: '700' }}>{u.name}</p>
+                      <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-heading)', letterSpacing: '0.5px' }}>{u.permanentCode}</p>
+                      {u.bio && <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '3px', lineHeight: '1.3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.bio}</p>}
                     </div>
                   </div>
-                ))}
-              </>
-            )}
+                  {!socialData.following.some((f: any) => f.id === u.id) ? (
+                    <button onClick={e => { e.stopPropagation(); socialAction('follow', u.id); }}
+                      style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>
+                      Follow Back
+                    </button>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

@@ -275,8 +275,7 @@ export async function searchUsers(query: string): Promise<any[]> {
   if (!q) return users;
   return users.filter((u: any) =>
     u.name?.toLowerCase().includes(q) ||
-    u.permanentCode?.toLowerCase().includes(q) ||
-    u.email?.toLowerCase().includes(q)
+    u.permanentCode?.toLowerCase().includes(q)
   );
 }
 
@@ -329,4 +328,14 @@ export async function unblockUser(userId: string, targetId: string): Promise<voi
 export async function getUserRooms(userId: string): Promise<any[]> {
   const allRooms = await getAllRooms();
   return allRooms.filter((r: any) => r.isPermanent && r.participants.includes(userId));
+}
+
+export async function findUserByGmail(gmail: string): Promise<any | null> {
+  const all = await getAllUsers();
+  return all.find((u: any) => u.isPermanent && u.email?.toLowerCase() === gmail.toLowerCase()) || null;
+}
+
+export async function findUserByEmail(email: string): Promise<any | null> {
+  const all = await getAllUsers();
+  return all.find((u: any) => u.email?.toLowerCase() === email.toLowerCase()) || null;
 }

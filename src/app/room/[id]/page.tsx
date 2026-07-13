@@ -344,10 +344,17 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       const formData = new FormData();
       formData.append('file', file);
       const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(errData.error || 'Upload failed');
+      }
       const { url } = await uploadRes.json();
+      if (!url) throw new Error('No URL returned from upload');
       await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomId: room.id, senderId: user.id, senderName: user.name, content: 'Image', type: 'image', imageUrl: url }) });
-    } catch (e) {}
+    } catch (e) {
+      console.error('Image upload failed:', e);
+    }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };

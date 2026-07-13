@@ -9,7 +9,7 @@ import { useTheme } from '@/components/ThemeProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'home' | 'nonperm-create' | 'nonperm-join' | 'perm-create-form' | 'perm-join' | 'perm-warning'>('home');
+  const [mode, setMode] = useState<'home' | 'nonperm-create' | 'nonperm-join' | 'perm-create-form' | 'perm-join' | 'perm-warning' | 'perm-login'>('home');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -91,7 +91,8 @@ export default function LoginPage() {
 
   const handlePermCreate = async () => {
     if (!name.trim()) return setError('Enter your name');
-    if (!email.trim()) return setError('Enter your email');
+    if (!email.trim()) return setError('Enter your Gmail address');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Enter a valid Gmail address');
     if (!phone.trim()) return setError('Enter your phone number');
     setLoading(true);
     setError('');
@@ -108,6 +109,29 @@ export default function LoginPage() {
       router.push('/social');
     } catch (e: any) {
       setError(e.message || 'Failed to create permanent room');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePermLogin = async () => {
+    if (!email.trim()) return setError('Enter your Gmail address');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Enter a valid Gmail address');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/users/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gmail: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      localStorage.setItem('pyl84y_user', JSON.stringify(data.user));
+      localStorage.setItem('pyl84y_room', JSON.stringify(data.room));
+      router.push('/social');
+    } catch (e: any) {
+      setError(e.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -229,13 +253,18 @@ export default function LoginPage() {
               <ul style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: '2', listStyle: 'none', padding: 0 }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#fbbf24' }}>•</span> Your ID is valid for <strong style={{ color: '#fbbf24' }}>7 days only</strong></li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-danger)' }}>•</span> After 7 days, your ID <strong style={{ color: 'var(--color-danger)' }}>auto-deletes</strong></li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> You need to provide Gmail, Phone & Name</li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> Others can search your code to chat</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> One Gmail = One account only</li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> After 7 days, reuse the same Gmail</li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: 'var(--color-text-muted)' }}>•</span> Chats saved for 24 hours</li>
               </ul>
             </div>
-            <button data-animate className="btn-primary" onClick={() => setMode('perm-create-form')}>
-              I Understand, Continue
+            <button data-animate className="btn-primary" onClick={() => setMode('perm-create-form')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              Create New Account
+            </button>
+            <button data-animate className="btn-secondary" onClick={() => { setMode('perm-login'); setEmail(''); setError(''); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '16px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Login to Account
             </button>
           </div>
         )}
@@ -253,6 +282,22 @@ export default function LoginPage() {
             <input data-animate className="input-field" placeholder="Phone Number" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
             <button data-animate className="btn-primary" onClick={handlePermCreate} disabled={loading}>
               {loading ? 'Creating...' : 'Create Permanent ID'}
+            </button>
+          </div>
+        )}
+
+        {/* PERMANENT LOGIN */}
+        {mode === 'perm-login' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <button data-animate onClick={() => { setMode('perm-warning'); setError(''); setEmail(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Back
+            </button>
+            <h2 data-animate style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px' }}>Login Account</h2>
+            <p data-animate style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Enter the Gmail used during signup</p>
+            <input data-animate className="input-field" placeholder="Your Gmail Address" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePermLogin()} />
+            <button data-animate className="btn-primary" onClick={handlePermLogin} disabled={loading}>
+              {loading ? 'Checking...' : 'Login'}
             </button>
           </div>
         )}
