@@ -118,6 +118,22 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
   }, [room]);
 
   useEffect(() => {
+    if (!room) return;
+    const refreshRoom = async () => {
+      try {
+        const res = await fetch(`/api/rooms?id=${room.id}`);
+        const data = await res.json();
+        if (data.room) {
+          setRoom(data.room);
+          localStorage.setItem('pyl84y_room', JSON.stringify(data.room));
+        }
+      } catch (e) {}
+    };
+    const interval = setInterval(refreshRoom, 3000);
+    return () => clearInterval(interval);
+  }, [room]);
+
+  useEffect(() => {
     if (messages.length > prevMsgCount.current && messagesRef.current) {
       const newMsgs = messagesRef.current.querySelectorAll('.message-bubble:not(.animated)');
       if (newMsgs.length > 0) {

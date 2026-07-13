@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { setRoom, addUser } from '@/lib/db';
+import { setRoom, addUser, getRoom } from '@/lib/db';
+
+export async function GET(request: NextRequest) {
+  try {
+    const roomId = request.nextUrl.searchParams.get('id');
+    if (!roomId) return NextResponse.json({ error: 'Room id required' }, { status: 400 });
+    const room = await getRoom(roomId);
+    if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+    return NextResponse.json({ room });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch room' }, { status: 500 });
+  }
+}
 
 function generateRoomCode(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
