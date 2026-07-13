@@ -298,12 +298,24 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       };
       pc.oniceconnectionstatechange = () => {
         const state = pc.iceConnectionState;
+        console.log('[Call] ICE state:', state);
         if (state === 'connected' || state === 'completed') {
           if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
           setCallState('active');
           startCallTimer();
         }
-        if (state === 'failed') endCall();
+        if (state === 'failed') {
+          console.log('[Call] ICE failed, attempting restart...');
+          try { pc.restartIce(); } catch {}
+        }
+        if (state === 'disconnected') {
+          setTimeout(() => {
+            if (pcRef.current && pcRef.current.iceConnectionState === 'disconnected') {
+              console.log('[Call] ICE still disconnected after 5s, ending');
+              endCall();
+            }
+          }, 5000);
+        }
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -361,12 +373,24 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       };
       pc.oniceconnectionstatechange = () => {
         const state = pc.iceConnectionState;
+        console.log('[Call] Receiver ICE state:', state);
         if (state === 'connected' || state === 'completed') {
           if (callTimeoutRef.current) { clearTimeout(callTimeoutRef.current); callTimeoutRef.current = null; }
           setCallState('active');
           startCallTimer();
         }
-        if (state === 'failed') endCall();
+        if (state === 'failed') {
+          console.log('[Call] Receiver ICE failed, attempting restart...');
+          try { pc.restartIce(); } catch {}
+        }
+        if (state === 'disconnected') {
+          setTimeout(() => {
+            if (pcRef.current && pcRef.current.iceConnectionState === 'disconnected') {
+              console.log('[Call] Receiver ICE still disconnected after 5s, ending');
+              endCall();
+            }
+          }, 5000);
+        }
       };
       if (incomingCallData.offer) {
         await pc.setRemoteDescription(new RTCSessionDescription(incomingCallData.offer));
