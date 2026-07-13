@@ -277,10 +277,17 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
         if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
       };
+      const bufferedCandidates: RTCIceCandidate[] = [];
+      let initiateComplete = false;
       pc.onicecandidate = async (e) => {
-        if (e.candidate) {
-          await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment }, senderId: user.id }) });
+        if (!e.candidate) return;
+        if (initiateComplete) {
+          try {
+            await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment }, senderId: user.id }) });
+          } catch {}
+        } else {
+          bufferedCandidates.push(e.candidate);
         }
       };
       pc.oniceconnectionstatechange = () => {
@@ -296,6 +303,13 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       await pc.setLocalDescription(offer);
       await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'initiate', roomId: room.id, callerId: user.id, callerName: user.name, receiverId, callType: type, offer: { type: offer.type, sdp: offer.sdp } }) });
+      initiateComplete = true;
+      for (const c of bufferedCandidates) {
+        try {
+          await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex, usernameFragment: c.usernameFragment }, senderId: user.id }) });
+        } catch {}
+      }
       callTimeoutRef.current = setTimeout(() => { if (callStateRef.current === 'outgoing') endCall(); }, 30000);
     } catch (e) {
       console.error('Failed to initiate call:', e);
@@ -321,10 +335,17 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
         if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
       };
+      const bufferedCandidates: RTCIceCandidate[] = [];
+      let answerComplete = false;
       pc.onicecandidate = async (e) => {
-        if (e.candidate) {
-          await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment }, senderId: user.id }) });
+        if (!e.candidate) return;
+        if (answerComplete) {
+          try {
+            await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex, usernameFragment: e.candidate.usernameFragment }, senderId: user.id }) });
+          } catch {}
+        } else {
+          bufferedCandidates.push(e.candidate);
         }
       };
       pc.oniceconnectionstatechange = () => {
@@ -354,6 +375,13 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
       await pc.setLocalDescription(answer);
       await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'answer', roomId: room.id, answer: { type: answer.type, sdp: answer.sdp }, receiverId: user.id }) });
+      answerComplete = true;
+      for (const c of bufferedCandidates) {
+        try {
+          await fetch('/api/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'ice', roomId: room.id, candidate: { candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex, usernameFragment: c.usernameFragment }, senderId: user.id }) });
+        } catch {}
+      }
     } catch (e) {
       console.error('Failed to accept call:', e);
       if (room) {
