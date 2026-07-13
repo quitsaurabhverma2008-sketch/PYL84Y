@@ -480,35 +480,35 @@ input:focus, textarea:focus {
 .gradient-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.25;
+  filter: blur(100px);
+  opacity: 0.35;
   pointer-events: none;
   z-index: 0;
 }
 
 .gradient-blob-1 {
-  width: 400px;
-  height: 400px;
+  width: 500px;
+  height: 500px;
   background: var(--color-primary);
-  top: -100px;
-  left: -100px;
+  top: -150px;
+  left: -150px;
   animation: blobFloat1 8s ease-in-out infinite;
 }
 
 .gradient-blob-2 {
-  width: 350px;
-  height: 350px;
+  width: 450px;
+  height: 450px;
   background: var(--color-secondary);
-  bottom: -80px;
-  right: -80px;
+  bottom: -120px;
+  right: -120px;
   animation: blobFloat2 10s ease-in-out infinite;
 }
 
 .gradient-blob-3 {
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  height: 400px;
   background: var(--color-accent);
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   animation: blobFloat3 12s ease-in-out infinite;

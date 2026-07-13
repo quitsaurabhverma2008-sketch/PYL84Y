@@ -352,7 +352,9 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)', position: 'relative', overflow: 'hidden' }}>
+      <div className="gradient-blob gradient-blob-1" style={{ opacity: 0.12 }} />
+      <div className="gradient-blob gradient-blob-2" style={{ opacity: 0.1 }} />
       {/* Header */}
       <div style={{ padding: '16px 24px', background: 'var(--color-overlay)', borderBottom: '1px solid var(--color-card-border)', position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(24px)', borderTop: '3px solid transparent', borderImage: 'linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-accent)) 1' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>

@@ -2,14 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { animate } from 'animejs';
 import { applyTheme, getComboById } from '@/lib/themes';
 import ThemePicker from '@/components/ThemePicker';
 import ChatBgPicker from '@/components/ChatBgPicker';
 import { useTheme } from '@/components/ThemeProvider';
-
-const ChatBackground = dynamic(() => import('@/components/ChatBackground'), { ssr: false });
 
 interface Message {
   id: string;
@@ -360,7 +357,9 @@ export default function RoomPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="chat-container" style={{ background: 'var(--color-background)' }}>
-      <ChatBackground />
+      {/* Colorful background blobs */}
+      <div className="gradient-blob gradient-blob-1" style={{ opacity: 0.15, filter: 'blur(120px)' }} />
+      <div className="gradient-blob gradient-blob-2" style={{ opacity: 0.12, filter: 'blur(120px)' }} />
       <audio ref={remoteAudioRef} autoPlay />
 
       {/* INCOMING CALL OVERLAY */}

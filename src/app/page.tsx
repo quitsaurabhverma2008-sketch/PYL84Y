@@ -2,11 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { animate } from 'animejs';
 import { applyTheme, getComboById } from '@/lib/themes';
-
-const ParticleBackground = dynamic(() => import('@/components/ParticleBackground'), { ssr: false });
 
 export default function LoginPage() {
   const router = useRouter();
@@ -140,7 +137,6 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
-      <ParticleBackground />
       {/* Colorful gradient blobs */}
       <div className="gradient-blob gradient-blob-1" />
       <div className="gradient-blob gradient-blob-2" />
