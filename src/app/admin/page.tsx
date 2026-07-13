@@ -352,7 +352,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--color-background)', color: 'var(--color-foreground)', fontFamily: 'var(--font-body)', position: 'relative', overflowX: 'hidden', overflowY: 'auto' }}>
       <div className="gradient-blob gradient-blob-1" style={{ opacity: 0.12 }} />
       <div className="gradient-blob gradient-blob-2" style={{ opacity: 0.1 }} />
       {/* Header */}

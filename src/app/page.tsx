@@ -9,7 +9,7 @@ import { useTheme } from '@/components/ThemeProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'home' | 'nonperm-create' | 'nonperm-join' | 'perm-create-form' | 'perm-join' | 'perm-warning' | 'perm-login'>('home');
+  const [mode, setMode] = useState<'home' | 'nonperm-create' | 'nonperm-join' | 'perm-create-form' | 'perm-join' | 'perm-warning' | 'perm-login' | 'perm-code-login'>('home');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -124,6 +124,28 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gmail: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      localStorage.setItem('pyl84y_user', JSON.stringify(data.user));
+      localStorage.setItem('pyl84y_room', JSON.stringify(data.room));
+      router.push('/social');
+    } catch (e: any) {
+      setError(e.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePermCodeLogin = async () => {
+    if (!code.trim()) return setError('Enter your permanent code');
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/users/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -264,7 +286,11 @@ export default function LoginPage() {
             </button>
             <button data-animate className="btn-secondary" onClick={() => { setMode('perm-login'); setEmail(''); setError(''); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '16px' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              Login to Account
+              Login with Gmail
+            </button>
+            <button data-animate className="btn-secondary" onClick={() => { setMode('perm-code-login'); setCode(''); setError(''); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '16px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Login with Code
             </button>
           </div>
         )}
@@ -297,6 +323,22 @@ export default function LoginPage() {
             <p data-animate style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Enter the Gmail used during signup</p>
             <input data-animate className="input-field" placeholder="Your Gmail Address" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePermLogin()} />
             <button data-animate className="btn-primary" onClick={handlePermLogin} disabled={loading}>
+              {loading ? 'Checking...' : 'Login'}
+            </button>
+          </div>
+        )}
+
+        {/* PERMANENT CODE LOGIN */}
+        {mode === 'perm-code-login' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <button data-animate onClick={() => { setMode('perm-warning'); setError(''); setCode(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '14px', textAlign: 'left', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Back
+            </button>
+            <h2 data-animate style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px' }}>Login with Code</h2>
+            <p data-animate style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Enter your permanent room code</p>
+            <input data-animate className="input-field" placeholder="Your Permanent Code" value={code} onChange={e => setCode(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && handlePermCodeLogin()} style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: '700', fontSize: '20px', textAlign: 'center', fontFamily: "var(--font-heading)" }} />
+            <button data-animate className="btn-primary" onClick={handlePermCodeLogin} disabled={loading}>
               {loading ? 'Checking...' : 'Login'}
             </button>
           </div>
